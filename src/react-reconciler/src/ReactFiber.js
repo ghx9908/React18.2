@@ -50,3 +50,39 @@ export function createFiber(tag, pendingProps, key) {
 export function createHostRootFiber() {
   return createFiber(HostRoot, null, null)
 }
+
+/**
+ * 基于老的fiber和新的属性创建新的fiber
+ * 1.current和workInProgress不是一个对象
+ * 2.workInProgress
+ *   2.1有两种情况，一种是没有，创建一个新，互相通过alternate指向
+ *   2.2 存在alternate,直接复用老的alternate就可以了
+ * 复用有两层含义
+ * 1.复用老的fiber对象
+ * 2.复用老的真实DOM
+ * @param {*} current 老fiber
+ * @param {*} pendingProps 新属性
+ */
+export function createWorkInProgress(current, pendingProps) {
+  let workInProgress = current.alternate
+  if (workInProgress === null) {
+    workInProgress = createFiber(current.tag, pendingProps, current.key)
+    workInProgress.type = current.type
+    workInProgress.stateNode = current.stateNode
+    workInProgress.alternate = current
+    current.alternate = workInProgress
+  } else {
+    workInProgress.pendingProps = pendingProps
+    workInProgress.type = current.type
+    workInProgress.flags = NoFlags
+    workInProgress.subtreeFlags = NoFlags
+    workInProgress.deletions = null
+  }
+  workInProgress.child = current.child
+  workInProgress.memoizedProps = current.memoizedProps
+  workInProgress.memoizedState = current.memoizedState
+  workInProgress.updateQueue = current.updateQueue
+  workInProgress.sibling = current.sibling
+  workInProgress.index = current.index
+  return workInProgress
+}

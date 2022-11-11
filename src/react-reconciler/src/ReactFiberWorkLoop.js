@@ -1,4 +1,5 @@
 import { scheduleCallback } from "scheduler"
+import { createWorkInProgress } from "./ReactFiber"
 /**
  * 计划更新root
  * 源码中此处有一个任务的功能
@@ -17,5 +18,15 @@ function ensureRootIsScheduled(root) {
  * @param {*} root
  */
 function performConcurrentWorkOnRoot(root) {
-  console.log("performConcurrentWorkOnRoot", root)
+  //第一次一同步的方式渲染根节点，初次渲染的时候，都是同步
+  renderRootSync(root)
+}
+
+function prepareFreshStack(root, renderLanes) {
+  workInProgress = createWorkInProgress(root.current, null)
+  console.log("workInProgress=>", workInProgress)
+}
+function renderRootSync(root) {
+  //开始构建fiber树
+  prepareFreshStack(root)
 }
