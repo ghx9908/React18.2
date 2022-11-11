@@ -69,12 +69,11 @@ function createChildReconciler(shouldTrackSideEffects) {
     let resultingFirstChild = null //返回的第一个新儿子
     let previousNewFiber = null //上一个的一个新的儿fiber
     let newIdx = 0 //用来遍历新的虚拟DOM的索引
-    let oldFiber = currentFirstChild //第一个老fiber
     // 开始第一轮循环 如果老fiber有值，新的虚拟DOM也有值
-    for (; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
+    for (; newIdx < newChildren.length; newIdx++) {
       const newFiber = createChild(returnFiber, newChildren[newIdx])
       if (newFiber === null) continue
-      lastPlacedIndex = placeChild(newFiber, newIdx)
+      placeChild(newFiber, newIdx)
       //如果previousNewFiber为null，说明是第一个fiber
       if (previousNewFiber === null) {
         resultingFirstChild = newFiber //li(A).sibling=p(B).sibling=>li(C)

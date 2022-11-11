@@ -55,7 +55,6 @@ export function processUpdateQueue(workInProgress) {
       newState = getStateFromUpdate(update, newState)
       update = update.next
     }
-    console.log("newState=>", newState)
     workInProgress.memoizedState = newState
   }
 }
