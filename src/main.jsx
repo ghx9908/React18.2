@@ -4,5 +4,7 @@ let element = (
     hello<span style={{ color: "red" }}>world</span>
   </h1>
 )
+
 const root = createRoot(document.getElementById("root"))
+console.log("root=>", root)
 root.render(element)
