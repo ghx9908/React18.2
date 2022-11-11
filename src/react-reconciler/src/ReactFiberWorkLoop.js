@@ -49,7 +49,6 @@ function performUnitOfWork(unitOfWork) {
   const current = unitOfWork.alternate
   //完成当前fiber的子fiber链表构建后
   const next = beginWork(current, unitOfWork)
-  console.log("next=>", next)
   //等待生效的变成已生效的
   unitOfWork.memoizedProps = unitOfWork.pendingProps
   if (next === null) {

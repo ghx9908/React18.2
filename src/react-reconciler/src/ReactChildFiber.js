@@ -34,7 +34,6 @@ function createChildReconciler(shouldTrackSideEffects) {
   }
 
   function createChild(returnFiber, newChild) {
-    debugger
     if (
       (typeof newChild === "string" && newChild !== "") ||
       typeof newChild === "number"

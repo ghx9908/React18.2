@@ -67,7 +67,7 @@ function updateHostComponent(current, workInProgress) {
  * @returns
  */
 export function beginWork(current, workInProgress) {
-  // logger("beginWork", workInProgress)
+  logger("beginWork", workInProgress)
   switch (workInProgress.tag) {
     case HostRoot:
       return updateHostRoot(current, workInProgress)
