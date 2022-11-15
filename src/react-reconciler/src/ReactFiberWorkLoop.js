@@ -1,6 +1,7 @@
 import { scheduleCallback } from "scheduler"
 import { createWorkInProgress } from "./ReactFiber"
 import { beginWork } from "./ReactFiberBeginWork"
+import { completeWork } from "./ReactFiberCompleteWork"
 /**
  * 计划更新root
  * 源码中此处有一个任务的功能
@@ -26,7 +27,6 @@ function performConcurrentWorkOnRoot(root) {
 let workInProgress = null
 function prepareFreshStack(root) {
   workInProgress = createWorkInProgress(root.current, null)
-  console.log("workInProgress=>", workInProgress)
 }
 function renderRootSync(root) {
   //开始构建fiber树
@@ -53,10 +53,34 @@ function performUnitOfWork(unitOfWork) {
   unitOfWork.memoizedProps = unitOfWork.pendingProps
   if (next === null) {
     //如果没有子节点表示当前的fiber已经完成了
-    workInProgress = null
-    // completeUnitOfWork(unitOfWork)
+    completeUnitOfWork(unitOfWork)
   } else {
     //如果有子节点，就让子节点成为下一个工作单元
     workInProgress = next
   }
+}
+function completeUnitOfWork(unitOfWork) {
+  let completedWork = unitOfWork
+  do {
+    //老fiber
+    const current = completedWork.alternate
+    //父fiber
+    const returnFiber = completedWork.return
+    //执行此fiber 的完成工作,如果是原生组件的话就是创建真实的DOM节点
+    completeWork(current, completedWork)
+    //如果有弟弟，就构建弟弟对应的fiber子链表
+    const siblingFiber = completedWork.sibling
+    if (siblingFiber !== null) {
+      workInProgress = siblingFiber
+      return
+    }
+    //如果没有弟弟，说明这当前完成的就是父fiber的最后一个节点
+    //也就是说一个父fiber,所有的子fiber全部完成了
+    completedWork = returnFiber
+    workInProgress = completedWork
+  } while (completedWork !== null)
+  //如果走到了这里，说明整个fiber树全部构建完毕,把构建状态设置为空成
+  // if (workInProgressRootExitStatus === RootInProgress) {
+  //   workInProgressRootExitStatus = RootCompleted
+  // }
 }

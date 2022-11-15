@@ -1,4 +1,4 @@
-import logger from "shared/logger"
+import logger, { indent } from "shared/logger"
 import { processUpdateQueue } from "./ReactFiberClassUpdateQueue"
 import { mountChildFibers, reconcileChildFibers } from "./ReactChildFiber"
 import { shouldSetTextContent } from "react-dom-bindings/src/ReactDOMHostConfig"
@@ -67,7 +67,9 @@ function updateHostComponent(current, workInProgress) {
  * @returns
  */
 export function beginWork(current, workInProgress) {
-  logger("beginWork", workInProgress)
+  indent.number += 2
+  logger(" ".repeat(indent.number) + "beginWork", workInProgress)
+
   switch (workInProgress.tag) {
     case HostRoot:
       return updateHostRoot(current, workInProgress)

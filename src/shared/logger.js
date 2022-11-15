@@ -14,3 +14,5 @@ export default function logger(prefix, workInProgress) {
   }
   console.log(`${prefix} ${str}`)
 }
+let indent = { number: 0 }
+export { indent }
