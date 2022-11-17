@@ -55,6 +55,9 @@ export function completeWork(current, workInProgress) {
   logger(" ".repeat(indent.number) + "completeWork", workInProgress)
   const newProps = workInProgress.pendingProps
   switch (workInProgress.tag) {
+    case HostRoot:
+      bubbleProperties(workInProgress)
+      break
     case HostComponent: // 5如果完成的是原生节点的话
       ///现在只是在处理创建或者说挂载新节点的逻辑，后面此处分进行区分是初次挂载还是更新
       //创建真实的DOM节点
@@ -68,7 +71,7 @@ export function completeWork(current, workInProgress) {
       workInProgress.stateNode = instance
       // 把 workInProgress.pendingProps 内容挂载到dom上
       // node.style.color = red node.textContent = text node.setAttribute(name, value)
-      finalizeInitialChildren(instance, type, newProps)
+      finalizeInitialChildren(instance, type, newProps) //设置初始属性
       // 向上冒泡属性,将子节点的副作用挂载到自己身上  fiber.subtreeFlags = subtreeFlags;
       bubbleProperties(workInProgress)
       break

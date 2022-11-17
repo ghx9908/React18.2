@@ -50,3 +50,22 @@ export function appendInitialChild(parent, child) {
 export function finalizeInitialChildren(domElement, type, props) {
   setInitialProperties(domElement, type, props)
 }
+
+/**
+ * 把子dom插入到父dom节点
+ * @param {*} parentInstance
+ * @param {*} child
+ */
+export function appendChild(parentInstance, child) {
+  parentInstance.appendChild(child)
+}
+
+/**
+ * 在某一节点前面插入新的节点
+ * @param {*} parentInstance 父节点
+ * @param {*} child  被插入的节点
+ * @param {*} beforeChild 要插入到谁的前面
+ */
+export function insertBefore(parentInstance, child, beforeChild) {
+  parentInstance.insertBefore(child, beforeChild)
+}
