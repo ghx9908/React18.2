@@ -6,7 +6,7 @@ import {
 } from "./ReactWorkTags"
 import { NoFlags } from "./ReactFiberFlags"
 /**
- *
+ * 创建fiber
  * @param {*} tag fiber的类型 函数组件0  类组件1 原生组件5 根元素3
  * @param {*} pendingProps 新属性，等待处理或者说生效的属性
  * @param {*} key 唯一标识
@@ -46,6 +46,13 @@ export function FiberNode(tag, pendingProps, key) {
 // This is lazily created to avoid allocating
 // extra objects for things that are never updated. It also allow us to
 // reclaim the extra memory if needed.
+/**
+ * 创建fiber 给 tag, pendingProps, key 属性赋值 其他的为默认值
+ * @param {*} tag 标签类型
+ * @param {*} pendingProps 等待生效的属性  文本节节点pendingProps为 文本内容
+ * @param {*} key 唯一标识
+ * @returns 返回创建fiber
+ */
 export function createFiber(tag, pendingProps, key) {
   return new FiberNode(tag, pendingProps, key)
 }
@@ -107,7 +114,12 @@ function createFiberFromTypeAndProps(type, key, pendingProps) {
   fiber.type = type
   return fiber
 }
-
+/**
+ *  创建的fiber 给 tag， pendingProps ，key赋值
+ * @param content 文本字符内容
+ * @return 创建的fiber 给 tag， pendingProps ，key赋值
+ */
 export function createFiberFromText(content) {
-  return createFiber(HostText, content, null)
+  //创建的文本fiber 给 tag， pendingProps ，key赋值
+  return createFiber(HostText, content, null) //(6,hello,null)
 }

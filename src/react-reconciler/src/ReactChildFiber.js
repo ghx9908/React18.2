@@ -3,7 +3,7 @@ import { createFiberFromElement, createFiberFromText } from "./ReactFiber"
 import { Placement, ChildDeletion } from "./ReactFiberFlags"
 import isArray from "shared/isArray"
 /**
- * @param {*} shouldTrackSideEffects 是否跟踪副作用
+ * @param {*} shouldTrackSideEffects 是否跟踪副作用 //是否有老fiber false == 不跟踪副作用
  */
 function createChildReconciler(shouldTrackSideEffects) {
   /**
@@ -32,13 +32,19 @@ function createChildReconciler(shouldTrackSideEffects) {
     }
     return newFiber
   }
-
+  /**
+   * 创建fiber 并且给pendingProps赋值
+   * @param {*} returnFiber 新创建fiber的父Fiber
+   * @param {*} newChild  要创建的一个子虚拟dom
+   * @returns 新创建子fiber
+   */
   function createChild(returnFiber, newChild) {
     if (
       (typeof newChild === "string" && newChild !== "") ||
       typeof newChild === "number"
     ) {
-      const created = createFiberFromText(`${newChild}`)
+      //创建文本的子虚拟dom 创建的文本fiber 给 tag， pendingProps ，key赋值  pendingProps = hello
+      const created = createFiberFromText(`${newChild}`) //新创建的fiber
       created.return = returnFiber
       return created
     }
@@ -55,6 +61,11 @@ function createChildReconciler(shouldTrackSideEffects) {
     }
     return null
   }
+  /**
+   *  指定新的fiber在新的挂载索引 别切根据是否有副作用设置fiber的flags  newFiber.index = newIdx newFiber.flags |= Placement
+   * @param {*} newFiber
+   * @param {*} newIdx
+   */
   function placeChild(newFiber, newIdx) {
     //指定新的fiber在新的挂载索引
     newFiber.index = newIdx
@@ -65,14 +76,24 @@ function createChildReconciler(shouldTrackSideEffects) {
       newFiber.flags |= Placement
     }
   }
+  /**
+   * 创建子fiber链表并返回第一个子fiber
+   * @param {*} returnFiber 需要新biber对应父biber
+   * @param {*} currentFirstChild 老fiber对应的子fiber
+   * @param {*} newChildren 虚拟dom [hello文本节点,span虚拟DOM元素]
+   * @returns 返回第一个子fiber
+   */
   function reconcileChildrenArray(returnFiber, currentFirstChild, newChildren) {
     let resultingFirstChild = null //返回的第一个新儿子
     let previousNewFiber = null //上一个的一个新的儿fiber
     let newIdx = 0 //用来遍历新的虚拟DOM的索引
     // 开始第一轮循环 如果老fiber有值，新的虚拟DOM也有值
     for (; newIdx < newChildren.length; newIdx++) {
-      const newFiber = createChild(returnFiber, newChildren[newIdx])
+      // 开始创建fiber
+      const newFiber = createChild(returnFiber, newChildren[newIdx]) //创建的新fiber 并且给pendingProps赋值
       if (newFiber === null) continue
+      //指定新的fiber在新的挂载索引 别切根据是否有副作用设置fiber的flags  newFiber.index = newIdx newFiber.flags |= Placement
+      //shouldTrackSideEffects 判断是否跟踪fiber的副作用
       placeChild(newFiber, newIdx)
       //如果previousNewFiber为null，说明是第一个fiber
       if (previousNewFiber === null) {
@@ -88,6 +109,7 @@ function createChildReconciler(shouldTrackSideEffects) {
   }
   /**
    * 比较子Fibers  DOM-DIFF 就是用老的子fiber链表和新的虚拟DOM进行比较的过程
+   * 创建子fiber链表并返回第一个子fiber
    * @param {*} returnFiber 新的父Fiber
    * @param {*} currentFirstChild 老fiber第一个子fiber   current一般来说指的是老
    * @param {*} newChild 新的子虚拟DOM  h1虚拟DOM
@@ -107,6 +129,7 @@ function createChildReconciler(shouldTrackSideEffects) {
     }
     //newChild [hello文本节点,span虚拟DOM元素]
     if (isArray(newChild)) {
+      //创建子fiber链表并返回第一个子fiber
       return reconcileChildrenArray(returnFiber, currentFirstChild, newChild)
     }
     return null

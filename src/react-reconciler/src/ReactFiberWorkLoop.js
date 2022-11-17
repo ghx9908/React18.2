@@ -48,7 +48,7 @@ function performUnitOfWork(unitOfWork) {
   //获取新的fiber对应的老fiber
   const current = unitOfWork.alternate
   //完成当前fiber的子fiber链表构建后
-  const next = beginWork(current, unitOfWork)
+  const next = beginWork(current, unitOfWork) //返回新创建的第一个子fiber
   //等待生效的变成已生效的
   unitOfWork.memoizedProps = unitOfWork.pendingProps
   if (next === null) {
@@ -67,6 +67,7 @@ function completeUnitOfWork(unitOfWork) {
     //父fiber
     const returnFiber = completedWork.return
     //执行此fiber 的完成工作,如果是原生组件的话就是创建真实的DOM节点
+    //完成一个fiber节点 创建真实dom节点 fiber.stateNode, fiber.fibersubtreeFlags fiber.flags赋值
     completeWork(current, completedWork)
     //如果有弟弟，就构建弟弟对应的fiber子链表
     const siblingFiber = completedWork.sibling
