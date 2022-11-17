@@ -23,7 +23,7 @@ export function FiberNode(tag, pendingProps, key) {
   this.sibling = null //指向弟弟
 
   //fiber哪来的？通过虚拟DOM节点创建，虚拟DOM会提供pendingProps用来创建fiber节点的属性
-  this.pendingProps = pendingProps //等待生效的属性
+  this.pendingProps = pendingProps //等待生效的属性  文本fiber 对应的是文本内容 原生dom对应的是{childern:"world",styles:{color:'red'}}
   this.memoizedProps = null //已经生效的属性
 
   //每个fiber还会有自己的状态，每一种fiber 状态存的类型是不一样的
