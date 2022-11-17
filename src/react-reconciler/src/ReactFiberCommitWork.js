@@ -1,4 +1,9 @@
-import { HostComponent, HostRoot, HostText } from "./ReactWorkTags"
+import {
+  HostComponent,
+  HostRoot,
+  HostText,
+  FunctionComponent,
+} from "./ReactWorkTags"
 import { Placement, MutationMask } from "./ReactFiberFlags"
 import {
   appendChild,
@@ -155,6 +160,7 @@ function commitPlacement(finishedWork) {
  */
 export function commitMutationEffectsOnFiber(finishedWork, root) {
   switch (finishedWork.tag) {
+    case FunctionComponent:
     case HostRoot:
     case HostComponent:
     case HostText: {

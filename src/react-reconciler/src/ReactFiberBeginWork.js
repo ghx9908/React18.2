@@ -9,6 +9,7 @@ import {
   IndeterminateComponent,
   FunctionComponent,
 } from "./ReactWorkTags"
+import { renderWithHooks } from "react-reconciler/src/ReactFiberHooks"
 
 /**
  * 根据新的虚拟DOM生成新的Fiber链表   workInProgress.child = 新创建的第一个子fiber
@@ -68,6 +69,25 @@ function updateHostComponent(current, workInProgress) {
   return workInProgress.child
 }
 /**
+ * 挂载函数组件
+ * @param {*} current  老fiber
+ * @param {*} workInProgress 新的fiber
+ * @param {*} Component 组件类型，也就是函数组件的定义
+ */
+export function mountIndeterminateComponent(
+  current,
+  workInProgress,
+  Component
+) {
+  const props = workInProgress.pendingProps
+  //const value = Component(props);
+  const value = renderWithHooks(current, workInProgress, Component, props)
+  workInProgress.tag = FunctionComponent
+  reconcileChildren(current, workInProgress, value)
+  return workInProgress.child
+}
+
+/**
  * 目标是根据新虚拟DOM构建新的fiber子链表 child .sibling
  * @param {*} current 老fiber
  * @param {*} workInProgress 新的fiber h1
@@ -78,6 +98,13 @@ export function beginWork(current, workInProgress) {
   logger(" ".repeat(indent.number) + "beginWork", workInProgress)
 
   switch (workInProgress.tag) {
+    // 因为在React里组件其实有两种，一种是函数组件，一种是类组件，但是它们都是都是函数
+    case IndeterminateComponent:
+      return mountIndeterminateComponent(
+        current,
+        workInProgress,
+        workInProgress.type
+      )
     case HostRoot:
       return updateHostRoot(current, workInProgress)
     case HostComponent: //原生dom节点
