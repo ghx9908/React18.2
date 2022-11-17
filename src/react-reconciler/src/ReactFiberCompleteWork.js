@@ -11,6 +11,7 @@ import {
   createTextInstance,
   createInstance,
   finalizeInitialChildren,
+  appendInitialChild,
 } from "react-dom-bindings/src/client/ReactDOMHostConfig"
 /**
  * 把当前的完成的fiber所有的子节点对应的真实DOM都挂载到自己父parent真实DOM节点上
@@ -20,8 +21,9 @@ import {
 function appendAllChildren(parent, workInProgress) {
   let node = workInProgress.child //获取子fiber
   while (node) {
-    //如果子节点类型是一个原生节点或者是一个文件节点
+    //如果子节点类型是一个原生节点或者是一个文节本点
     if (node.tag === HostComponent || node.tag === HostText) {
+      //子dom节点插入到父dom节点上
       appendInitialChild(parent, node.stateNode)
       //如果第一个儿子不是一个原生节点，说明它可能是一个函数组件
     } else if (node.child !== null) {
@@ -60,6 +62,7 @@ export function completeWork(current, workInProgress) {
       //创建真实DOM节点并且返回
       const instance = createInstance(type, newProps, workInProgress) //新创建的真实dom节点
       //把自己所有的儿子都添加到自己的身上
+
       appendAllChildren(instance, workInProgress) //span 没有子fiber
       //创建真实的DOM节点并传入stateNode
       workInProgress.stateNode = instance

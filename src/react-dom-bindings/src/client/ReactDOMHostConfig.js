@@ -31,6 +31,14 @@ export function createInstance(type) {
   //updateFiberProps(domElement, props);
   return domElement
 }
+/**
+ * 子dom节点插入到父dom节点上
+ * @param {*} parent 父真实dom节点
+ * @param {*} child 子真实dom节点
+ */
+export function appendInitialChild(parent, child) {
+  parent.appendChild(child)
+}
 
 /**
  * 把 workInProgress.pendingProps 内容挂载到dom上
