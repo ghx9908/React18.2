@@ -1,4 +1,5 @@
 import { setInitialProperties } from "./ReactDOMComponent"
+import { precacheFiberNode, updateFiberProps } from "./ReactDOMComponentTree"
 
 /**
  *  判断当前虚拟DOM它的儿子是不是一个文本独生子
@@ -26,9 +27,11 @@ export function createTextInstance(content) {
  * @param {*} type 标签
  * @returns 真实dom节点
  */
-export function createInstance(type) {
+export function createInstance(type, props, internalInstanceHandle) {
   const domElement = document.createElement(type)
-  //updateFiberProps(domElement, props);
+  precacheFiberNode(internalInstanceHandle, domElement)
+  updateFiberProps(domElement, props)
+
   return domElement
 }
 /**

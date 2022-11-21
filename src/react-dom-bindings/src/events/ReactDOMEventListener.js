@@ -1,3 +1,7 @@
+import getEventTarget from "./getEventTarget"
+import { getClosestInstanceFromNode } from "../client/ReactDOMComponentTree"
+import { dispatchEventForPluginEventSystem } from "./DOMPluginEventSystem"
+
 export function createEventListenerWrapperWithPriority(
   targetContainer,
   domEventName,
@@ -43,11 +47,16 @@ export function dispatchEvent(
   targetContainer,
   nativeEvent
 ) {
-  console.log(
-    "dispatchEvent=>",
-    domEventName,
-    eventSystemFlags,
-    targetContainer,
-    nativeEvent
+  //获取事件源，它是一个真实DOM
+  const nativeEventTarget = getEventTarget(nativeEvent)
+  //从真实的DOM节点上获取它对应的fiber实例
+  const targetInst = getClosestInstanceFromNode(nativeEventTarget)
+  //派发事件为插件事件系统
+  dispatchEventForPluginEventSystem(
+    domEventName, //click
+    eventSystemFlags, //0 4
+    nativeEvent, //原生事件
+    targetInst, //此真实DOM对应的fiber
+    targetContainer //目标容器
   )
 }

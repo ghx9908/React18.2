@@ -7,6 +7,10 @@ import {
   addEventCaptureListener,
   addEventBubbleListener,
 } from "./EventListener"
+import getEventTarget from "./getEventTarget"
+import getListener from "./getListener"
+import { HostComponent } from "react-reconciler/src/ReactWorkTags"
+
 const listeningMarker = `_reactListening` + Math.random().toString(36).slice(2)
 
 // 注册简单事件 入口
@@ -70,4 +74,88 @@ function addTrappedEventListener(
     //增加事件的冒泡监听
     addEventBubbleListener(targetContainer, domEventName, listener)
   }
+}
+
+export function dispatchEventForPluginEventSystem(
+  domEventName,
+  eventSystemFlags,
+  nativeEvent,
+  targetInst,
+  targetContainer
+) {
+  //派发事件为插件
+  dispatchEventForPlugins(
+    domEventName,
+    eventSystemFlags,
+    nativeEvent,
+    targetInst,
+    targetContainer
+  )
+}
+
+function dispatchEventForPlugins(
+  domEventName,
+  eventSystemFlags,
+  nativeEvent,
+  targetInst,
+  targetContainer
+) {
+  const nativeEventTarget = getEventTarget(nativeEvent)
+  //派发事件的数组 为了事件冒泡捕获
+  const dispatchQueue = []
+
+  //提取事件
+  extractEvents(
+    dispatchQueue, //[]
+    domEventName,
+    targetInst,
+    nativeEvent,
+    nativeEventTarget,
+    eventSystemFlags,
+    targetContainer
+  )
+  console.log("dispatchQueue", dispatchQueue)
+}
+//提取事件
+function extractEvents(
+  dispatchQueue,
+  domEventName,
+  targetInst,
+  nativeEvent,
+  nativeEventTarget,
+  eventSystemFlags,
+  targetContainer
+) {
+  SimpleEventPlugin.extractEvents(
+    dispatchQueue,
+    domEventName,
+    targetInst,
+    nativeEvent,
+    nativeEventTarget,
+    eventSystemFlags,
+    targetContainer
+  )
+}
+
+export function accumulateSinglePhaseListeners(
+  targetFiber,
+  reactName,
+  nativeEventType,
+  isCapturePhase
+) {
+  const captureName = reactName + "Capture"
+  const reactEventName = isCapturePhase ? captureName : reactName
+  const listeners = []
+  let instance = targetFiber
+  while (instance !== null) {
+    const { stateNode, tag } = instance
+    if (tag === HostComponent && stateNode !== null) {
+      const listener = getListener(instance, reactEventName)
+      if (listener) {
+        listeners.push(listener)
+      }
+    }
+    instance = instance.return
+  }
+  return listeners
 }
