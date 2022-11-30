@@ -110,7 +110,7 @@ export function dispatchEventForPluginEventSystem(
  * @param {*} domEventName div#root
  * @param {*} eventSystemFlags 0 4
  * @param {*} nativeEvent  原生事件 e
- * @param {*} targetInst 此真实DOM对应的fiber
+ * param {*} targetInst 此真实DOM对应的fiber
  * @param {*} targetContainer div#root
  */
 function dispatchEventForPlugins(
@@ -135,7 +135,67 @@ function dispatchEventForPlugins(
     eventSystemFlags,
     targetContainer
   )
-  console.log("dispatchQueue", dispatchQueue)
+  processDispatchQueue(dispatchQueue, eventSystemFlags)
+}
+/**
+ * 执行回调函数
+ * @param {*} dispatchQueue  调度队列
+ * @param {*} eventSystemFlags  冒泡捕获标识
+ */
+function processDispatchQueue(dispatchQueue, eventSystemFlags) {
+  //判断是否在捕获阶段  0 冒泡 4 捕获
+  const inCapturePhase = (eventSystemFlags & IS_CAPTURE_PHASE) !== 0
+  for (let i = 0; i < dispatchQueue.length; i++) {
+    const { event, listeners } = dispatchQueue[i]
+    //顺序调度
+    processDispatchQueueItemsInOrder(event, listeners, inCapturePhase)
+  }
+}
+/**
+ * 执行dispatch
+ * @param {*} event
+ * @param {*} listener
+ * @param {*} currentTarget
+ */
+function executeDispatch(event, listener, currentTarget) {
+  //合成事件实例currentTarget是在不断的变化的
+  // event nativeEventTarget 它的是原始的事件源，是永远不变的
+  // event currentTarget 当前的事件源，它是会随着事件回调的执行不断变化的
+  event.currentTarget = currentTarget
+  listener(event)
+}
+/**
+ * 顺序调度
+ * @param {*} event e span
+ * @param {*} dispatchListeners [fn]
+ * @param {*} inCapturePhase true false
+ * @returns
+ */
+function processDispatchQueueItemsInOrder(
+  event,
+  dispatchListeners,
+  inCapturePhase
+) {
+  if (inCapturePhase) {
+    //dispatchListeners[子，父]
+    for (let i = dispatchListeners.length - 1; i >= 0; i--) {
+      const { listener, currentTarget } = dispatchListeners[i]
+      if (event.isPropagationStopped()) {
+        return
+      }
+      //执行dispatch
+      executeDispatch(event, listener, currentTarget)
+    }
+  } else {
+    for (let i = 0; i < dispatchListeners.length; i++) {
+      const { listener, currentTarget } = dispatchListeners[i]
+      if (event.isPropagationStopped()) {
+        return
+      }
+      //执行dispatch
+      executeDispatch(event, listener, currentTarget)
+    }
+  }
 }
 /**
  * 提取事件
@@ -192,10 +252,21 @@ export function accumulateSinglePhaseListeners(
       // 获取对应 onClickCapture 或者 onClick的回调函数
       const listener = getListener(instance, reactEventName)
       if (listener) {
-        listeners.push(listener)
+        listeners.push(createDispatchListener(instance, listener, stateNode))
       }
     }
     instance = instance.return
   }
   return listeners
+}
+
+/**
+ * 存储到listeners
+ * @param {*} instance  fiber
+ * @param {*} listener  fn
+ * @param {*} currentTarget node
+ * @returns 返回存储的对象
+ */
+function createDispatchListener(instance, listener, currentTarget) {
+  return { instance, listener, currentTarget }
 }

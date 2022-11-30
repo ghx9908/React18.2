@@ -2,14 +2,19 @@ import { createRoot } from "react-dom/client"
 function FunctionComponent() {
   return (
     <h1
-      onClick={() => console.log("onClick h1")}
-      onClickCapture={() => console.log("onClickCapture h1")}
+      onClick={(event) => console.log("onClick h1", event.type)}
+      onClickCapture={(event) => console.log("onClickCapture h1", event.type)}
     >
       hello
       <span
         style={{ color: "red" }}
-        onClick={() => console.log("onClick span")}
-        onClickCapture={() => console.log("onClickCapture span")}
+        onClick={(event) => {
+          event.stopPropagation()
+          console.log("onClick span", event.type)
+        }}
+        onClickCapture={(event) => {
+          console.log("onClickCapture span", event.type)
+        }}
       >
         world
       </span>
