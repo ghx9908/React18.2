@@ -13,11 +13,11 @@ import { HostComponent } from "react-reconciler/src/ReactWorkTags"
 
 const listeningMarker = `_reactListening` + Math.random().toString(36).slice(2)
 
-// 注册简单事件 入口
+// 注册简单事件 入口  给set里面放入事件 map里面做映射
 SimpleEventPlugin.registerEvents()
 /**
  * 监听所有真实的事件
- * @param {*} rootContainerElement FiberRootNode
+ * @param {*} rootContainerElement FiberRootNode div#root
  */
 export function listenToAllSupportedEvents(rootContainerElement) {
   //监听根容器，也就是div#root只监听一次
@@ -46,7 +46,7 @@ export function listenToNativeEvent(
   if (isCapturePhaseListener) {
     eventSystemFlags |= IS_CAPTURE_PHASE
   }
-
+  //增加捕获事件监听器
   addTrappedEventListener(
     target,
     domEventName,
@@ -54,7 +54,13 @@ export function listenToNativeEvent(
     isCapturePhaseListener
   )
 }
-
+/**
+ * 增加捕获事件监听器
+ * @param {*} targetContainer   目标DOM节点 div#root 容器节点
+ * @param {*} domEventName 原生事件 click
+ * @param {*} eventSystemFlags 默认是0指的是冒泡  4是捕获
+ * @param {*} isCapturePhaseListener  是否是捕获阶段 true false
+ */
 function addTrappedEventListener(
   targetContainer,
   domEventName,
@@ -68,7 +74,7 @@ function addTrappedEventListener(
     eventSystemFlags
   )
   if (isCapturePhaseListener) {
-    //增加事件的捕获监听
+    //增加事件的捕获监听 绑定事件
     addEventCaptureListener(targetContainer, domEventName, listener)
   } else {
     //增加事件的冒泡监听

@@ -1,7 +1,13 @@
 import getEventTarget from "./getEventTarget"
 import { getClosestInstanceFromNode } from "../client/ReactDOMComponentTree"
 import { dispatchEventForPluginEventSystem } from "./DOMPluginEventSystem"
-
+/**
+ *创建事件监听函数包裹器带优先级
+ * @param {*} targetContainer div#root
+ * @param {*} domEventName click
+ * @param {*} eventSystemFlags 0 4
+ * @returns
+ */
 export function createEventListenerWrapperWithPriority(
   targetContainer,
   domEventName,

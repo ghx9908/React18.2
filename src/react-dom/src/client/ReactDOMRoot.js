@@ -16,6 +16,6 @@ export function createRoot(container) {
   // div#root
   const root = createContainer(container)
   //监听所有的支持的事件
-  listenToAllSupportedEvents(container)
+  listenToAllSupportedEvents(container) //div#root
   return new ReactDOMRoot(root)
 }
