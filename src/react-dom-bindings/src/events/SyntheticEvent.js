@@ -17,7 +17,7 @@ function createSyntheticEvent(inter) {
    * @param {*} reactName React属性名 onClick
    * @param {*} reactEventType click
    * @param {*} targetInst 事件源对应的fiber实例
-   * @param {*} nativeEvent 原生事件对象
+   * @param {*} nativeEvent 原生事件对象 e
    * @param {*} nativeEventTarget 原生事件源 span 事件源对应的那个真实DOM
    */
   function SyntheticBaseEvent(
@@ -37,6 +37,8 @@ function createSyntheticEvent(inter) {
       if (!inter.hasOwnProperty(propName)) {
         continue
       }
+      //this.clientX = e. clientX
+      //this.clientY = e. clientY
       this[propName] = nativeEvent[propName]
     }
     //是否已经阻止默认事件

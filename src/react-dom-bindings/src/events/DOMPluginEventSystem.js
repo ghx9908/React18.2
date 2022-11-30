@@ -81,7 +81,14 @@ function addTrappedEventListener(
     addEventBubbleListener(targetContainer, domEventName, listener)
   }
 }
-
+/**
+ *  派发事件为插件事件系统
+ * @param {*} domEventName click
+ * @param {*} eventSystemFlags 0 4
+ * @param {*} nativeEvent 原生事件 e
+ * @param {*} targetInst  此真实DOM对应的fiber
+ * @param {*} targetContainer div#root
+ */
 export function dispatchEventForPluginEventSystem(
   domEventName,
   eventSystemFlags,
@@ -98,7 +105,14 @@ export function dispatchEventForPluginEventSystem(
     targetContainer
   )
 }
-
+/**
+ * 派发事件为插件
+ * @param {*} domEventName div#root
+ * @param {*} eventSystemFlags 0 4
+ * @param {*} nativeEvent  原生事件 e
+ * @param {*} targetInst 此真实DOM对应的fiber
+ * @param {*} targetContainer div#root
+ */
 function dispatchEventForPlugins(
   domEventName,
   eventSystemFlags,
@@ -106,11 +120,12 @@ function dispatchEventForPlugins(
   targetInst,
   targetContainer
 ) {
+  // 获取事件源，它是一个真实DOM
   const nativeEventTarget = getEventTarget(nativeEvent)
   //派发事件的数组 为了事件冒泡捕获
   const dispatchQueue = []
 
-  //提取事件
+  //提取事件  把要执行回调函数添加到dispatchQueue中
   extractEvents(
     dispatchQueue, //[]
     domEventName,
@@ -122,7 +137,16 @@ function dispatchEventForPlugins(
   )
   console.log("dispatchQueue", dispatchQueue)
 }
-//提取事件
+/**
+ * 提取事件
+ * @param {*} dispatchQueue 派发事件的数组 为了事件冒泡捕获 []
+ * @param {*} domEventName click
+ * @param {*} targetInst fiber
+ * @param {*} nativeEvent e
+ * @param {*} nativeEventTarget span
+ * @param {*} eventSystemFlags 0 4
+ * @param {*} targetContainer div#root
+ */
 function extractEvents(
   dispatchQueue,
   domEventName,
@@ -132,6 +156,7 @@ function extractEvents(
   eventSystemFlags,
   targetContainer
 ) {
+  //把要执行回调函数添加到dispatchQueue中
   SimpleEventPlugin.extractEvents(
     dispatchQueue,
     domEventName,
@@ -142,20 +167,29 @@ function extractEvents(
     targetContainer
   )
 }
-
+/**
+ * 累加单阶段监听
+ * @param {*} targetFiber  fiber
+ * @param {*} reactName onClick
+ * @param {*} nativeEventType click
+ * @param {*} isCapturePhase true  false
+ * @returns 返回捕获或者冒泡的事件函数集合
+ */
 export function accumulateSinglePhaseListeners(
   targetFiber,
   reactName,
   nativeEventType,
   isCapturePhase
 ) {
-  const captureName = reactName + "Capture"
+  const captureName = reactName + "Capture" //onClickCapture
+  //捕获还是冒泡
   const reactEventName = isCapturePhase ? captureName : reactName
-  const listeners = []
+  const listeners = [] //先放子span 的事件 再放父h1的事件
   let instance = targetFiber
   while (instance !== null) {
     const { stateNode, tag } = instance
     if (tag === HostComponent && stateNode !== null) {
+      // 获取对应 onClickCapture 或者 onClick的回调函数
       const listener = getListener(instance, reactEventName)
       if (listener) {
         listeners.push(listener)

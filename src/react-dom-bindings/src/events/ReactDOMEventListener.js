@@ -24,7 +24,7 @@ export function createEventListenerWrapperWithPriority(
 }
 
 /**
- * 派发离散的事件的的监听函数 不联系
+ * 派发离散的事件的的监听函数
  * @param {*} domEventName 事件名 click
  * @param {*} eventSystemFlags 阶段 0 冒泡 4 捕获
  * @param {*} container 容器div#root
@@ -41,11 +41,11 @@ function dispatchDiscreteEvent(
 }
 
 /**
- * 此方法就是委托给容器的回调，当容器#root在捕获或者说冒泡阶段处理事件的时候会执行此函数
- * @param {*} domEventName
- * @param {*} eventSystemFlags
- * @param {*} container
- * @param {*} nativeEvent
+ * 此方法就是委托给容器的回调，当容器div#root在捕获或者说冒泡阶段处理事件的时候会执行此函数
+ * @param {*} domEventName 事件名 click
+ * @param {*} eventSystemFlags 阶段 0 冒泡 4 捕获
+ * @param {*} targetContainer 容器div#root
+ * @param {*} nativeEvent 原生的事件
  */
 export function dispatchEvent(
   domEventName,

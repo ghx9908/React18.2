@@ -2,8 +2,8 @@ import { createRoot } from "react-dom/client"
 function FunctionComponent() {
   return (
     <h1
-      onClick={() => console.log("onClick FunctionComponent")}
-      onClickCapture={() => console.log("onClickCapture FunctionComponent")}
+      onClick={() => console.log("onClick h1")}
+      onClickCapture={() => console.log("onClickCapture h1")}
     >
       hello
       <span
