@@ -1,27 +1,21 @@
+import * as React from "react"
 import { createRoot } from "react-dom/client"
+function counter(state, action) {
+  if (action.type === "add") return state + action.payload
+  return state
+}
 function FunctionComponent() {
+  const [number, setNumber] = React.useReducer(counter, 0)
   return (
-    <h1
-      onClick={(event) => console.log("onClick h1", event.type)}
-      onClickCapture={(event) => console.log("onClickCapture h1", event.type)}
+    <button
+      onClick={() => {
+        setNumber({ type: "add", payload: 1 })
+      }}
     >
-      hello
-      <span
-        style={{ color: "red" }}
-        onClick={(event) => {
-          event.stopPropagation()
-          console.log("onClick span", event.type)
-        }}
-        onClickCapture={(event) => {
-          console.log("onClickCapture span", event.type)
-        }}
-      >
-        world
-      </span>
-    </h1>
+      {number}
+    </button>
   )
 }
 let element = <FunctionComponent />
-
 const root = createRoot(document.getElementById("root"))
 root.render(element)
