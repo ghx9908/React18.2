@@ -1,11 +1,42 @@
 import { REACT_ELEMENT_TYPE } from "shared/ReactSymbols"
-import { createFiberFromElement, createFiberFromText } from "./ReactFiber"
+import {
+  createFiberFromElement,
+  createFiberFromText,
+  createWorkInProgress,
+} from "./ReactFiber"
 import { Placement, ChildDeletion } from "./ReactFiberFlags"
 import isArray from "shared/isArray"
 /**
  * @param {*} shouldTrackSideEffects 是否跟踪副作用 //是否有老fiber false == 不跟踪副作用
  */
 function createChildReconciler(shouldTrackSideEffects) {
+  function useFiber(fiber, pendingProps) {
+    const clone = createWorkInProgress(fiber, pendingProps)
+    clone.index = 0
+    clone.sibling = null
+    return clone
+  }
+  function deleteChild(returnFiber, childToDelete) {
+    if (!shouldTrackSideEffects) return
+    const deletions = returnFiber.deletions
+    if (deletions === null) {
+      returnFiber.deletions = [childToDelete]
+      returnFiber.flags |= ChildDeletion
+    } else {
+      returnFiber.deletions.push(childToDelete)
+    }
+  }
+
+  //删除从currentFirstChild之后所有的fiber节点
+  function deleteRemainingChildren(returnFiber, currentFirstChild) {
+    if (!shouldTrackSideEffects) return
+    let childToDelete = currentFirstChild
+    while (childToDelete !== null) {
+      deleteChild(returnFiber, childToDelete)
+      childToDelete = childToDelete.sibling
+    }
+    return null
+  }
   /**
    *
    * @param {*} returnFiber 根fiber div#root对应的fiber
@@ -14,6 +45,32 @@ function createChildReconciler(shouldTrackSideEffects) {
    * @returns 返回新的第一个子fiber
    */
   function reconcileSingleElement(returnFiber, currentFirstChild, element) {
+    //新的虚拟DOM的key,也就是唯一标准
+    const key = element.key // null
+    let child = currentFirstChild //老的FunctionComponent对应的fiber
+
+    while (child !== null) {
+      //有老fiber
+      //判断此老fiber对应的key和新的虚拟DOM对象的key是否一样 null===null
+      if (child.key === key) {
+        //判断老fiber对应的类型和新虚拟DOM元素对应的类型是否相同
+        if (child.type === element.type) {
+          // p div
+          deleteRemainingChildren(returnFiber, child.sibling)
+          //如果key一样，类型也一样，则认为此节点可以复用
+          const existing = useFiber(child, element.props)
+          existing.return = returnFiber
+          return existing
+        } else {
+          //如果找到一key一样老fiber,但是类型不一样，不能此老fiber,把剩下的全部删除
+          deleteRemainingChildren(returnFiber, child)
+        }
+      } else {
+        deleteChild(returnFiber, child)
+      }
+      child = child.sibling
+    }
+
     //因为我们现实的初次挂载，老节点currentFirstChild肯定是没有的，所以可以直接根据虚拟DOM创建新的Fiber节点
     const created = createFiberFromElement(element)
     created.return = returnFiber
@@ -116,7 +173,7 @@ function createChildReconciler(shouldTrackSideEffects) {
    */
   function reconcileChildFibers(returnFiber, currentFirstChild, newChild) {
     //现在需要处理更新的逻辑了，处理dom diff
-    //现在暂时只考虑新的节点只有一个的情况
+    //现在暂时只考虑 有一个的情况
     if (typeof newChild === "object" && newChild !== null) {
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE:

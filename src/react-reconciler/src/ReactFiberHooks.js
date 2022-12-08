@@ -5,8 +5,67 @@ import { enqueueConcurrentHookUpdate } from "./ReactFiberConcurrentUpdates"
 
 let currentlyRenderingFiber = null //当前正在渲染中的fiber
 let workInProgressHook = null
+let currentHook = null
 const HooksDispatcherOnMount = {
   useReducer: mountReducer,
+}
+const HooksDispatcherOnUpdate = {
+  useReducer: updateReducer,
+}
+
+/**
+ * 构建新的hooks
+ * @return 新构建的 workInProgressHook
+ */
+function updateWorkInProgressHook() {
+  //获取将要构建的新的hook的老hook
+  if (currentHook === null) {
+    const current = currentlyRenderingFiber.alternate
+    currentHook = current.memoizedState
+  } else {
+    currentHook = currentHook.next
+  }
+  //根据老hook创建新hook
+  const newHook = {
+    memoizedState: currentHook.memoizedState,
+    queue: currentHook.queue,
+    next: null,
+  }
+  if (workInProgressHook === null) {
+    currentlyRenderingFiber.memoizedState = workInProgressHook = newHook
+  } else {
+    workInProgressHook = workInProgressHook.next = newHook
+  }
+  return workInProgressHook
+}
+
+function updateReducer(reducer) {
+  //获取新的hook
+  const hook = updateWorkInProgressHook()
+  //获取新的hook的更新队列
+  const queue = hook.queue
+  //获取老的hook
+  const current = currentHook
+  //获取将要生效的更新队列
+  const pendingQueue = queue.pending
+  //初始化一个新的状态，取值为当前的状态
+  let newState = current.memoizedState
+  if (pendingQueue !== null) {
+    queue.pending = null
+    const firstUpdate = pendingQueue.next
+    let update = firstUpdate
+    do {
+      if (update.hasEagerState) {
+        newState = update.eagerState
+      } else {
+        const action = update.action
+        newState = reducer(newState, action)
+      }
+      update = update.next
+    } while (update !== null && update !== firstUpdate)
+  }
+  hook.memoizedState = newState
+  return [hook.memoizedState, queue.dispatch]
 }
 
 // function counter(state, action) {
@@ -88,7 +147,15 @@ function mountWorkInProgressHook() {
  */
 export function renderWithHooks(current, workInProgress, Component, props) {
   currentlyRenderingFiber = workInProgress //Function组件对应的fiber
-  ReactCurrentDispatcher.current = HooksDispatcherOnMount
+  //如果有老的fiber,并且有老的hook链表
+  if (current !== null && current.memoizedState !== null) {
+    ReactCurrentDispatcher.current = HooksDispatcherOnUpdate
+  } else {
+    ReactCurrentDispatcher.current = HooksDispatcherOnMount
+  }
   const children = Component(props)
+  currentlyRenderingFiber = null
+  workInProgressHook = null
+  currentHook = null
   return children
 }

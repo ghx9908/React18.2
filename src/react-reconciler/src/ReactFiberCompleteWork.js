@@ -12,6 +12,7 @@ import {
   createInstance,
   finalizeInitialChildren,
   appendInitialChild,
+  prepareUpdate,
 } from "react-dom-bindings/src/client/ReactDOMHostConfig"
 /**
  * 把当前的完成的fiber所有的子节点对应的真实DOM都挂载到自己父parent真实DOM节点上
@@ -44,6 +45,28 @@ function appendAllChildren(parent, workInProgress) {
     node = node.sibling
   }
 }
+function markUpdate(workInProgress) {
+  workInProgress.flags |= Update //给当前的fiber添加更新的副作用
+}
+/**
+ * 在fiber(button)的完成阶段准备更新DOM
+ * @param {*} current button老fiber
+ * @param {*} workInProgress button的新fiber
+ * @param {*} type 类型
+ * @param {*} newProps 新属性
+ */
+function updateHostComponent(current, workInProgress, type, newProps) {
+  const oldProps = current.memoizedProps //老的属性
+  const instance = workInProgress.stateNode //老的DOM节点
+  //比较新老属性，收集属性的差异
+  const updatePayload = prepareUpdate(instance, type, oldProps, newProps)
+  console.log("updatePayload=>", updatePayload)
+  //让原生组件的新fiber更新队列等于[]
+  workInProgress.updateQueue = updatePayload
+  if (updatePayload) {
+    markUpdate(workInProgress)
+  }
+}
 
 /**
  * 完成一个fiber节点 创建真实dom节点 fiber.stateNode, fiber.fibersubtreeFlags fiber.flags赋值
@@ -58,20 +81,28 @@ export function completeWork(current, workInProgress) {
     case HostRoot:
       bubbleProperties(workInProgress)
       break
+    case FunctionComponent:
+      bubbleProperties(workInProgress)
+      break
     case HostComponent: // 5如果完成的是原生节点的话
       ///现在只是在处理创建或者说挂载新节点的逻辑，后面此处分进行区分是初次挂载还是更新
       //创建真实的DOM节点
       const { type } = workInProgress //span
-      //创建真实DOM节点并且返回
-      const instance = createInstance(type, newProps, workInProgress) //新创建的真实dom节点
-      //把自己所有的儿子都添加到自己的身上
+      if (current !== null && workInProgress.stateNode !== null) {
+        updateHostComponent(current, workInProgress, type, newProps)
+      } else {
+        //创建真实DOM节点并且返回
+        const instance = createInstance(type, newProps, workInProgress) //新创建的真实dom节点
+        //把自己所有的儿子都添加到自己的身上
 
-      appendAllChildren(instance, workInProgress) //span 没有子fiber
-      //创建真实的DOM节点并传入stateNode
-      workInProgress.stateNode = instance
-      // 把 workInProgress.pendingProps 内容挂载到dom上
-      // node.style.color = red node.textContent = text node.setAttribute(name, value)
-      finalizeInitialChildren(instance, type, newProps) //设置初始属性
+        appendAllChildren(instance, workInProgress) //span 没有子fiber
+        //创建真实的DOM节点并传入stateNode
+        workInProgress.stateNode = instance
+        // 把 workInProgress.pendingProps 内容挂载到dom上
+        // node.style.color = red node.textContent = text node.setAttribute(name, value)
+        finalizeInitialChildren(instance, type, newProps) //设置初始属性
+      }
+
       // 向上冒泡属性,将子节点的副作用挂载到自己身上  fiber.subtreeFlags = subtreeFlags;
       bubbleProperties(workInProgress)
       break
