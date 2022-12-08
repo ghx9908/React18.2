@@ -7,9 +7,12 @@ const internalPropsKey = "__reactProps$" + randomKey
  * @return  对应的fiber实例
  */
 export function getClosestInstanceFromNode(targetNode) {
-  //创建真实dom实例的时候缓存的
   const targetInst = targetNode[internalInstanceKey]
-  return targetInst
+  if (targetInst) {
+    return targetInst
+  }
+  return null
+  //如果真实DOM上没有fiber,就不要返回undefined,而是要返回null
 }
 
 /**

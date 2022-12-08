@@ -2,8 +2,24 @@ import { scheduleCallback } from "scheduler"
 import { createWorkInProgress } from "./ReactFiber"
 import { beginWork } from "./ReactFiberBeginWork"
 import { completeWork } from "./ReactFiberCompleteWork"
-import { NoFlags, MutationMask } from "./ReactFiberFlags"
+import {
+  NoFlags,
+  MutationMask,
+  Placement,
+  Update,
+  ChildDeletion,
+} from "./ReactFiberFlags"
 import { commitMutationEffectsOnFiber } from "./ReactFiberCommitWork"
+import {
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText,
+} from "./ReactWorkTags"
+import { finishQueueingConcurrentUpdates } from "./ReactFiberConcurrentUpdates"
+
+let workInProgress = null
+let workInProgressRoot = null
 
 /**
  * 计划更新root
@@ -15,6 +31,8 @@ export function scheduleUpdateOnFiber(root, fiber, lane) {
   ensureRootIsScheduled(root)
 }
 function ensureRootIsScheduled(root) {
+  if (workInProgressRoot) return
+  workInProgressRoot = root
   //告诉 浏览器要执行performConcurrentWorkOnRoot 在此触发更新
   scheduleCallback(performConcurrentWorkOnRoot.bind(null, root))
 }
@@ -28,8 +46,8 @@ function performConcurrentWorkOnRoot(root) {
   //开始进入提交 阶段，就是执行副作用，修改真实DOM
   const finishedWork = root.current.alternate
   root.finishedWork = finishedWork
-  console.log("root=>", root)
   commitRoot(root)
+  workInProgressRoot = null
 }
 
 /**
@@ -38,6 +56,8 @@ function performConcurrentWorkOnRoot(root) {
  */
 function commitRoot(root) {
   const { finishedWork } = root
+  printFinishedWork(finishedWork)
+  console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
   //判断子树有没有副作用 更新或者插入
   const subtreeHasEffects =
     (finishedWork.subtreeFlags & MutationMask) !== NoFlags
@@ -51,9 +71,10 @@ function commitRoot(root) {
   //等DOM变更后，就可以把让root的current指向新的fiber树
   root.current = finishedWork
 }
-let workInProgress = null
+
 function prepareFreshStack(root) {
   workInProgress = createWorkInProgress(root.current, null)
+  finishQueueingConcurrentUpdates()
 }
 function renderRootSync(root) {
   //开始构建fiber树
@@ -111,4 +132,58 @@ function completeUnitOfWork(unitOfWork) {
   // if (workInProgressRootExitStatus === RootInProgress) {
   //   workInProgressRootExitStatus = RootCompleted
   // }
+}
+function printFinishedWork(fiber) {
+  const { flags, deletions } = fiber
+  if ((flags & ChildDeletion) !== NoFlags) {
+    fiber.flags &= ~ChildDeletion
+    console.log(
+      "子节点有删除" +
+        deletions
+          .map((fiber) => `${fiber.type}#${fiber.memoizedProps.id}`)
+          .join(",")
+    )
+  }
+  let child = fiber.child
+  while (child) {
+    printFinishedWork(child)
+    child = child.sibling
+  }
+
+  if (fiber.flags !== NoFlags) {
+    console.log(
+      getFlags(fiber),
+      getTag(fiber.tag),
+      typeof fiber.type === "function" ? fiber.type.name : fiber.type,
+      fiber.memoizedProps
+    )
+  }
+}
+function getFlags(fiber) {
+  const { flags } = fiber
+  if (flags === (Placement | Update)) {
+    return "移动"
+  }
+  if (flags === Placement) {
+    return "插入"
+  }
+  if (flags === Update) {
+    return "更新"
+  }
+
+  return flags
+}
+function getTag(tag) {
+  switch (tag) {
+    case FunctionComponent:
+      return "FunctionComponent"
+    case HostRoot:
+      return "HostRoot"
+    case HostComponent:
+      return "HostComponent"
+    case HostText:
+      return "HostText"
+    default:
+      return tag
+  }
 }

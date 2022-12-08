@@ -1,7 +1,9 @@
 import ReactSharedInternals from "shared/ReactSharedInternals"
 const { ReactCurrentDispatcher } = ReactSharedInternals
+import { scheduleUpdateOnFiber } from "./ReactFiberWorkLoop"
+import { enqueueConcurrentHookUpdate } from "./ReactFiberConcurrentUpdates"
 
-let currentRenderingFiber = null //当前正在渲染中的fiber
+let currentlyRenderingFiber = null //当前正在渲染中的fiber
 let workInProgressHook = null
 const HooksDispatcherOnMount = {
   useReducer: mountReducer,
@@ -25,14 +27,16 @@ function mountReducer(reducer, initialArg) {
   hook.memoizedState = initialArg //0 要返回的第一个参数
   const queue = {
     pending: null,
+    dispatch: null,
   }
   hook.queue = queue
   //要返回的第二个参数
-  const dispatch = dispatchReducerAction.bind(
+  const dispatch = (queue.dispatch = dispatchReducerAction.bind(
     null,
-    currentRenderingFiber, //当前渲染中的fiber
+    currentlyRenderingFiber, //当前渲染中的fiber
     queue
-  )
+  ))
+
   return [hook.memoizedState, dispatch]
 }
 
@@ -43,7 +47,14 @@ function mountReducer(reducer, initialArg) {
  * @param {*} action 派发的动作
  */
 function dispatchReducerAction(fiber, queue, action) {
-  console.log(fiber, queue, action)
+  //在每个hook里会存放一个更新队列，更新队列是一个更新对象的循环链表update1.next=update2.next=update1
+  const update = {
+    action, //{ type: 'add', payload: 1 } 派发的动作
+    next: null, //指向下一个更新对象
+  }
+  //把当前的最新的更添的添加更新队列中，并且返回当前的根fiber
+  const root = enqueueConcurrentHookUpdate(fiber, queue, update)
+  scheduleUpdateOnFiber(root)
 }
 
 /**
@@ -59,7 +70,7 @@ function mountWorkInProgressHook() {
   }
   if (workInProgressHook === null) {
     //当前函数对应的fiber的状态等于第一个hook对象  永远指向第一个hook
-    currentRenderingFiber.memoizedState = workInProgressHook = hook
+    currentlyRenderingFiber.memoizedState = workInProgressHook = hook
   } else {
     // workInProgressHook.next = hook
     // workInProgressHook = hook
@@ -76,7 +87,7 @@ function mountWorkInProgressHook() {
  * @returns 虚拟DOM或者说React元素
  */
 export function renderWithHooks(current, workInProgress, Component, props) {
-  currentRenderingFiber = workInProgress //Function组件对应的fiber
+  currentlyRenderingFiber = workInProgress //Function组件对应的fiber
   ReactCurrentDispatcher.current = HooksDispatcherOnMount
   const children = Component(props)
   return children
