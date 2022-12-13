@@ -2,7 +2,7 @@ import { registerTwoPhaseEvent } from "./EventRegistry"
 //简单事件插件事件名
 export const topLevelEventsToReactNames = new Map()
 
-const simpleEventPluginEvents = ["click"]
+const simpleEventPluginEvents = ["click", "mousedown"]
 /**
  * 注册事件 给set里面放入事件 map里面做映射
  * @param {*} domEventName [click]
