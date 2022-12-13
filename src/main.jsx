@@ -7,7 +7,7 @@ function FunctionComponent() {
   //如果使用的是useState，调用setNumber的时候传入的是老状态，则不需要更新，
   return number === 0 ? (
     <div
-      key="title"
+      key="title1"
       id="title"
       onClick={() => {
         setNumber(number + 1)
@@ -17,7 +17,7 @@ function FunctionComponent() {
     </div>
   ) : (
     <div
-      key="title"
+      key="title2"
       id="title2"
       onClick={() => {
         setNumber(number + 1)

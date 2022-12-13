@@ -16,6 +16,12 @@ function createChildReconciler(shouldTrackSideEffects) {
     clone.sibling = null
     return clone
   }
+  /**
+   *给父fiber的deletions和flags赋值
+   * @param {*} returnFiber 父fiber
+   * @param {*} childToDelete 将要删除的老节点
+   * @returns
+   */
   function deleteChild(returnFiber, childToDelete) {
     if (!shouldTrackSideEffects) return
     const deletions = returnFiber.deletions
@@ -46,6 +52,7 @@ function createChildReconciler(shouldTrackSideEffects) {
    */
   function reconcileSingleElement(returnFiber, currentFirstChild, element) {
     //新的虚拟DOM的key,也就是唯一标准
+
     const key = element.key // null
     let child = currentFirstChild //老的FunctionComponent对应的fiber
 

@@ -9,14 +9,92 @@ import {
   appendChild,
   insertBefore,
   commitUpdate,
+  removeChild,
 } from "react-dom-bindings/src/client/ReactDOMHostConfig"
+let hostParent = null
+/**
+ * 提交删除副作用
+ * @param {*} root 根节点
+ * @param {*} returnFiber 父fiber
+ * @param {*} deletedFiber 删除的fiber
+ */
+function commitDeletionEffects(root, returnFiber, deletedFiber) {
+  let parent = returnFiber
+  //一直向上找，找到真实的DOM节点为此
+  findParent: while (parent !== null) {
+    switch (parent.tag) {
+      case HostComponent: {
+        hostParent = parent.stateNode
+        break findParent
+      }
+      case HostRoot: {
+        hostParent = parent.stateNode.containerInfo
+        break findParent
+      }
+    }
+    parent = parent.return
+  }
+  commitDeletionEffectsOnFiber(root, returnFiber, deletedFiber)
+  hostParent = null
+}
 
 /**
- *
+ * 删除fiber
+ * @param {*} finishedRoot 跟biber
+ * @param {*} nearestMountedAncestor 最近的父fiber
+ * @param {*} deletedFiber 要删除的fiber
+ */
+function commitDeletionEffectsOnFiber(
+  finishedRoot,
+  nearestMountedAncestor,
+  deletedFiber
+) {
+  switch (deletedFiber.tag) {
+    case HostComponent:
+    case HostText: {
+      //当要删除一个节点的时候，要先删除它的子节点
+      recursivelyTraverseDeletionEffects(
+        finishedRoot,
+        nearestMountedAncestor,
+        deletedFiber
+      )
+      //再把自己删除
+      if (hostParent !== null) {
+        removeChild(hostParent, deletedFiber.stateNode)
+      }
+      break
+    }
+    default:
+      break
+  }
+}
+function recursivelyTraverseDeletionEffects(
+  finishedRoot,
+  nearestMountedAncestor,
+  parent
+) {
+  let child = parent.child
+  while (child !== null) {
+    commitDeletionEffectsOnFiber(finishedRoot, nearestMountedAncestor, child)
+    child = child.sibling
+  }
+}
+/**
+ * 递归遍历处理变更的作用
  * @param {*} root 根节点
  * @param {*} parentFiber  父fiber
  */
 function recursivelyTraverseMutationEffects(root, parentFiber) {
+  //先把父fiber上该删除的节点都删除
+  const deletions = parentFiber.deletions
+  if (deletions !== null) {
+    for (let i = 0; i < deletions.length; i++) {
+      const childToDelete = deletions[i]
+      //提交删除副作用
+      commitDeletionEffects(root, parentFiber, childToDelete)
+    }
+  }
+  //再去处理剩下的子节点
   //判断是否有副作用
   if (parentFiber.subtreeFlags & MutationMask) {
     let { child } = parentFiber
