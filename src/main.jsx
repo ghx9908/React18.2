@@ -5,16 +5,26 @@ function FunctionComponent() {
   console.log("FunctionComponent")
   const [number, setNumber] = React.useState(0)
   //如果使用的是useState，调用setNumber的时候传入的是老状态，则不需要更新，
-  return (
-    <button
+  return number === 0 ? (
+    <div
+      key="title"
+      id="title"
       onClick={() => {
-        setNumber(number) //0
-        setNumber(number + 1) //0
-        setNumber(number + 2) //0
+        setNumber(number + 1)
       }}
     >
-      {number}
-    </button>
+      title
+    </div>
+  ) : (
+    <div
+      key="title"
+      id="title2"
+      onClick={() => {
+        setNumber(number + 1)
+      }}
+    >
+      title2
+    </div>
   )
 }
 let element = <FunctionComponent />
