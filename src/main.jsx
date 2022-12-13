@@ -16,15 +16,15 @@ function FunctionComponent() {
       title
     </div>
   ) : (
-    <div
-      key="title2"
+    <p
+      key="title1"
       id="title2"
       onClick={() => {
         setNumber(number + 1)
       }}
     >
       title2
-    </div>
+    </p>
   )
 }
 let element = <FunctionComponent />
