@@ -23,9 +23,6 @@ function FunctionComponent() {
       <p key="B" id="B2">
         B2
       </p>
-      <li key="C" id="C2">
-        C2
-      </li>
     </ul>
   )
 }
