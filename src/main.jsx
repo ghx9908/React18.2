@@ -17,8 +17,14 @@ function FunctionComponent() {
     </ul>
   ) : (
     <ul key="container" onClick={() => setNumber(number + 1)}>
-      <li key="B" id="B2">
+      <li key="A" id="A2">
+        A2
+      </li>
+      <p key="B" id="B2">
         B2
+      </p>
+      <li key="C" id="C2">
+        C2
       </li>
     </ul>
   )
