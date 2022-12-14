@@ -8,7 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       react: path.posix.resolve("src/react"),
-      "react-dom": path.posix.resolve("src/react-dom"),
+      "react-dom": path.posix.resolve("src/react-dom"), //
       "react-dom-bindings": path.posix.resolve("src/react-dom-bindings"),
       "react-reconciler": path.posix.resolve("src/react-reconciler"),
       scheduler: path.posix.resolve("src/scheduler"),
@@ -16,4 +16,8 @@ export default defineConfig({
     },
   },
   plugins: [react()],
+  optimizeDeps: {
+    force: true,
+  },
 })
+// window和linux路分割符不一样 window  \  linux /

@@ -160,10 +160,7 @@ function printFinishedWork(fiber) {
   }
 }
 function getFlags(fiber) {
-  const { flags } = fiber
-  if (flags === (Placement | Update)) {
-    return "移动"
-  }
+  const { flags, deletions } = fiber
   if (flags === Placement) {
     return "插入"
   }
