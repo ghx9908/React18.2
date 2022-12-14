@@ -159,20 +159,30 @@ function printFinishedWork(fiber) {
     )
   }
 }
+
 function getFlags(fiber) {
   const { flags } = fiber
+  if (flags === (Update | Placement | ChildDeletion)) {
+    return `自己移动和子元素有删除`
+  }
+  if (flags === (ChildDeletion | Update)) {
+    return `自己有更新和子元素有删除`
+  }
+  if (flags === ChildDeletion) {
+    return `子元素有删除`
+  }
   if (flags === (Placement | Update)) {
-    return "移动"
+    return `移动并更新`
   }
   if (flags === Placement) {
-    return "插入"
+    return `插入`
   }
   if (flags === Update) {
-    return "更新"
+    return `更新`
   }
-
   return flags
 }
+
 function getTag(tag) {
   switch (tag) {
     case FunctionComponent:
