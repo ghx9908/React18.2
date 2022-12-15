@@ -18,3 +18,8 @@ export function useState(reducer, initialArg) {
   const dispatcher = resolveDispatcher()
   return dispatcher.useState(reducer, initialArg)
 }
+
+export function useEffect(create) {
+  const dispatcher = resolveDispatcher()
+  return dispatcher.useEffect(create)
+}

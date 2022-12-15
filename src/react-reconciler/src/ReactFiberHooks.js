@@ -2,6 +2,11 @@ import ReactSharedInternals from "shared/ReactSharedInternals"
 const { ReactCurrentDispatcher } = ReactSharedInternals
 import { scheduleUpdateOnFiber } from "./ReactFiberWorkLoop"
 import { enqueueConcurrentHookUpdate } from "./ReactFiberConcurrentUpdates"
+import { Passive as PassiveEffect } from "./ReactFiberFlags"
+import {
+  HasEffect as HookHasEffect,
+  Passive as HookPassive,
+} from "./ReactHookEffectTags"
 
 let currentlyRenderingFiber = null //当前正在渲染中的fiber
 let workInProgressHook = null
@@ -9,12 +14,94 @@ let currentHook = null
 const HooksDispatcherOnMount = {
   useReducer: mountReducer,
   useState: mountState,
+  useEffect: mountEffect,
 }
 const HooksDispatcherOnUpdate = {
   useReducer: updateReducer,
   useState: updateState,
+  useEffect: updateEffect,
+}
+/**
+ *挂载effect
+ * @param {*} create effect 传入的第一个函数参数
+ * @param {*} deps 传如的依赖
+ * @returns
+ */
+function mountEffect(create, deps) {
+  // 1024   useEffect 消极的HookPassive 8
+  return mountEffectImpl(PassiveEffect, HookPassive, create, deps)
+}
+/**
+ *
+ * @param {*} fiberFlags fiber 的flag PassiveEffect 1024
+ * @param {*} hookFlags hook的flag HookPassive 8
+ * @param {*} create effect 传入的第一个函数参数
+ * @param {*} deps 传如的依赖
+ */
+function mountEffectImpl(fiberFlags, hookFlags, create, deps) {
+  const hook = mountWorkInProgressHook()
+  const nextDeps = deps === undefined ? null : deps
+  //给当前的函数组件fiber添加flags
+  currentlyRenderingFiber.flags |= fiberFlags
+  // 添加effect链表并返回effect 并且给  hook.memoizedState赋值
+  hook.memoizedState = pushEffect(
+    HookHasEffect | hookFlags,
+    create,
+    undefined,
+    nextDeps
+  )
 }
 
+/**
+ * 添加effect链表
+ * @param {*} tag effect的标签
+ * @param {*} create 创建方法
+ * @param {*} destroy 销毁方法
+ * @param {*} deps 依赖数组
+ * @return  返回最后一个effect
+ */
+function pushEffect(tag, create, destroy, deps) {
+  const effect = {
+    tag,
+    create,
+    destroy,
+    deps,
+    next: null,
+  }
+  //拿当前fiber的更新队列
+  let componentUpdateQueue = currentlyRenderingFiber.updateQueue
+
+  if (componentUpdateQueue === null) {
+    // 当前effect是第一个 创建新的  {lastEffect: null}
+    componentUpdateQueue = createFunctionComponentUpdateQueue()
+    // 给 前fiber的更新队列赋值
+    currentlyRenderingFiber.updateQueue = componentUpdateQueue
+    // 循环链表  componentUpdateQueue.lastEffect指向最后一个effect
+    componentUpdateQueue.lastEffect = effect.next = effect
+  } else {
+    const lastEffect = componentUpdateQueue.lastEffect
+    if (lastEffect === null) {
+      //是否能进来？
+      componentUpdateQueue.lastEffect = effect.next = effect
+    } else {
+      // 追加effect
+      const firstEffect = lastEffect.next
+      lastEffect.next = effect
+      effect.next = firstEffect
+      componentUpdateQueue.lastEffect = effect
+    }
+  }
+  return effect
+}
+/**
+ * 初始创建函数组件UpdateQueue
+ * @returns {} {lastEffect: null} 尾指针
+ */
+function createFunctionComponentUpdateQueue() {
+  return {
+    lastEffect: null,
+  }
+}
 //useState其实就是一个内置了reducer的useReducer
 function baseStateReducer(state, action) {
   return typeof action === "function" ? action(state) : action
