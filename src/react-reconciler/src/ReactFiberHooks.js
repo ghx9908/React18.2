@@ -19,7 +19,7 @@ const HooksDispatcherOnMount = {
 const HooksDispatcherOnUpdate = {
   useReducer: updateReducer,
   useState: updateState,
-  useEffect: updateEffect,
+  // useEffect: updateEffect,
 }
 /**
  *挂载effect
@@ -39,6 +39,7 @@ function mountEffect(create, deps) {
  * @param {*} deps 传如的依赖
  */
 function mountEffectImpl(fiberFlags, hookFlags, create, deps) {
+  //把当前的hook添加到hooks链表中
   const hook = mountWorkInProgressHook()
   const nextDeps = deps === undefined ? null : deps
   //给当前的函数组件fiber添加flags
