@@ -9,16 +9,22 @@ function FunctionComponent() {
       console.log("destroy useEffect1")
     }
   })
-  React.useEffect(() => {
-    console.log("useEffect2")
+  React.useLayoutEffect(() => {
+    console.log("useLayoutEffect2")
     return () => {
-      console.log("destroy useEffect2")
+      console.log("destroy useLayoutEffect2")
     }
   })
   React.useEffect(() => {
     console.log("useEffect3")
     return () => {
       console.log("destroy useEffect3")
+    }
+  })
+  React.useLayoutEffect(() => {
+    console.log("useLayoutEffect4")
+    return () => {
+      console.log("destroy useLayoutEffect4")
     }
   })
   return <button onClick={() => setNumber(number + 1)}>{number}</button>

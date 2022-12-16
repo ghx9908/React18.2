@@ -2,10 +2,14 @@ import ReactSharedInternals from "shared/ReactSharedInternals"
 const { ReactCurrentDispatcher } = ReactSharedInternals
 import { scheduleUpdateOnFiber } from "./ReactFiberWorkLoop"
 import { enqueueConcurrentHookUpdate } from "./ReactFiberConcurrentUpdates"
-import { Passive as PassiveEffect } from "./ReactFiberFlags"
+import {
+  Passive as PassiveEffect,
+  Update as UpdateEffect,
+} from "./ReactFiberFlags"
 import {
   HasEffect as HookHasEffect,
   Passive as HookPassive,
+  Layout as HookLayout,
 } from "./ReactHookEffectTags"
 
 let currentlyRenderingFiber = null //当前正在渲染中的fiber
@@ -15,11 +19,32 @@ const HooksDispatcherOnMount = {
   useReducer: mountReducer,
   useState: mountState,
   useEffect: mountEffect,
+  useLayoutEffect: mountLayoutEffect,
 }
 const HooksDispatcherOnUpdate = {
   useReducer: updateReducer,
   useState: updateState,
   useEffect: updateEffect,
+  useLayoutEffect: updateLayoutEffect,
+}
+/**
+ *挂载LayoutEffect
+ * @param {*} create effect 传入的第一个函数参数
+ * @param {*} deps 传如的依赖
+ * @returns
+ */
+function mountLayoutEffect(create, deps) {
+  // 添加hooks链表 挂载副作用 给memoizedState赋值 （effect.next = effect）
+  return mountEffectImpl(UpdateEffect, HookLayout, create, deps)
+}
+/**
+ *更新LayoutEffect
+ * @param {*} create effect 传入的第一个函数参数
+ * @param {*} deps 传如的依赖
+ * @returns
+ */
+function updateLayoutEffect(create, deps) {
+  return updateEffectImpl(UpdateEffect, HookLayout, create, deps)
 }
 /**
  *挂载effect
@@ -95,7 +120,7 @@ function mountEffect(create, deps) {
   return mountEffectImpl(PassiveEffect, HookPassive, create, deps)
 }
 /**
- *
+ * 添加hooks链表 挂载副作用 给memoizedState赋值 （effect.next = effect）
  * @param {*} fiberFlags fiber 的flag PassiveEffect 1024
  * @param {*} hookFlags hook的flag HookPassive 8
  * @param {*} create effect 传入的第一个函数参数
