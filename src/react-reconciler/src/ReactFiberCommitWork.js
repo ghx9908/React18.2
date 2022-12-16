@@ -290,10 +290,17 @@ export function commitMutationEffectsOnFiber(finishedWork, root) {
       break
   }
 }
-
+/**
+ *  执行卸载副作用，destroy
+ * @param {*} finishedWork 根fiber
+ */
 export function commitPassiveUnmountEffects(finishedWork) {
   commitPassiveUnmountOnFiber(finishedWork)
 }
+/**
+ *  执行卸载副作用，destroy
+ * @param {*} finishedWork 根fiber
+ */
 function commitPassiveUnmountOnFiber(finishedWork) {
   const flags = finishedWork.flags
   switch (finishedWork.tag) {
@@ -323,9 +330,20 @@ function recursivelyTraversePassiveUnmountEffects(parentFiber) {
     }
   }
 }
+/**
+ *
+ * @param {*} finishedWork 完成的fiber
+ * @param {*} hookFlags flags
+ */
 function commitHookPassiveUnmountEffects(finishedWork, hookFlags) {
   commitHookEffectListUnmount(hookFlags, finishedWork)
 }
+
+/**
+ *  提交hook链表卸载 执行循环链表
+ * @param {*} flags flags
+ * @param {*} finishedWork 完成的fiber
+ */
 function commitHookEffectListUnmount(flags, finishedWork) {
   const updateQueue = finishedWork.updateQueue
   const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null

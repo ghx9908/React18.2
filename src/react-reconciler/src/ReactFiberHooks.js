@@ -19,7 +19,70 @@ const HooksDispatcherOnMount = {
 const HooksDispatcherOnUpdate = {
   useReducer: updateReducer,
   useState: updateState,
-  // useEffect: updateEffect,
+  useEffect: updateEffect,
+}
+/**
+ *挂载effect
+ * @param {*} create effect 传入的第一个函数参数
+ * @param {*} deps 传如的依赖
+ * @returns
+ */
+function updateEffect(create, deps) {
+  // 1024   useEffect 消极的HookPassive 8
+  return updateEffectImpl(PassiveEffect, HookPassive, create, deps)
+}
+/**
+ *
+ * @param {*} fiberFlags fiber 的flag PassiveEffect 1024
+ * @param {*} hookFlags hook的flag HookPassive 8
+ * @param {*} create effect 传入的第一个函数参数
+ * @param {*} deps 传如的依赖
+ */
+function updateEffectImpl(fiberFlags, hookFlags, create, deps) {
+  const hook = updateWorkInProgressHook() //取更新的hook
+  const nextDeps = deps === undefined ? null : deps //新依赖数组
+  let destroy
+  //上一个老hook
+  if (currentHook !== null) {
+    //获取此useEffect这个Hook上老的effect对象 create deps destroy
+    const prevEffect = currentHook.memoizedState
+    destroy = prevEffect.destroy
+    if (nextDeps !== null) {
+      const prevDeps = prevEffect.deps //老的依赖
+      // 用新数组和老数组进行对比，如果一样的话
+      if (areHookInputsEqual(nextDeps, prevDeps)) {
+        //不管要不要重新执行，都需要把新的effect组成完整的循环链表放到fiber.updateQueue中
+        hook.memoizedState = pushEffect(hookFlags, create, destroy, nextDeps)
+        return
+      }
+    }
+  }
+  //如果要执行的话需要修改fiber的flags
+  currentlyRenderingFiber.flags |= fiberFlags
+  //如果要执行的话 添加HookHasEffect flag
+  //有 Passive还需HookHasEffect,因为不是每个Passive都会执行的
+  hook.memoizedState = pushEffect(
+    HookHasEffect | hookFlags,
+    create,
+    destroy,
+    nextDeps
+  )
+}
+/**
+ * 比较新老依赖数组
+ * @param {*} nextDeps  新依赖数组
+ * @param {*} prevDeps 老依赖数组
+ * @returns 依赖数组是否改变
+ */
+function areHookInputsEqual(nextDeps, prevDeps) {
+  if (prevDeps === null) return null
+  for (let i = 0; i < prevDeps.length && i < nextDeps.length; i++) {
+    if (Object.is(nextDeps[i], prevDeps[i])) {
+      continue
+    }
+    return false
+  }
+  return true
 }
 /**
  *挂载effect
@@ -280,6 +343,7 @@ function mountWorkInProgressHook() {
  */
 export function renderWithHooks(current, workInProgress, Component, props) {
   currentlyRenderingFiber = workInProgress //Function组件对应的fiber
+  workInProgress.updateQueue = null //每次构建跟新队列先清空
   //如果有老的fiber,并且有老的hook链表
   if (current !== null && current.memoizedState !== null) {
     ReactCurrentDispatcher.current = HooksDispatcherOnUpdate
