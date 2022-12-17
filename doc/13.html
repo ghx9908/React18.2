@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MessageChannel</title>
+</head>
+
+<body>
+  <script>
+    let messageChannel = new MessageChannel();
+    var port1 = messageChannel.port1;
+    var port2 = messageChannel.port2;
+    //在port1里监听port2发过来的消息
+    port1.onmessage = (event) => {
+      console.log('port1接收到了来自port2的数据' + event.data);
+    }
+    //通过port2向port1发送消息
+    port2.postMessage('发送给port1的数据');
+  </script>
+</body>
+
+</html>
