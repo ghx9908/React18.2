@@ -4,6 +4,8 @@ import {
   updateProperties,
 } from "./ReactDOMComponent"
 import { precacheFiberNode, updateFiberProps } from "./ReactDOMComponentTree"
+import { DefaultEventPriority } from "react-reconciler/src/ReactEventPriorities"
+import { getEventPriority } from "../events/ReactDOMEventListener"
 
 /**
  *  判断当前虚拟DOM它的儿子是不是一个文本独生子
@@ -97,4 +99,16 @@ export function commitUpdate(
 
 export function removeChild(parentInstance, child) {
   parentInstance.removeChild(child)
+}
+/**
+ * 获取事件优先级
+ * @returns
+ */
+export function getCurrentEventPriority() {
+  const currentEvent = window.event
+  if (currentEvent === undefined) {
+    //当前没有任何事件 返回默认事件优先级
+    return DefaultEventPriority //16 初次渲染16
+  }
+  return getEventPriority(currentEvent.type)
 }

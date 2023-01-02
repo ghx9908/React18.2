@@ -1,6 +1,12 @@
 import getEventTarget from "./getEventTarget"
 import { getClosestInstanceFromNode } from "../client/ReactDOMComponentTree"
 import { dispatchEventForPluginEventSystem } from "./DOMPluginEventSystem"
+import {
+  ContinuousEventPriority,
+  DefaultEventPriority,
+  DiscreteEventPriority,
+} from "react-reconciler/src/ReactEventPriorities"
+
 /**
  *创建事件监听函数包裹器带优先级
  * @param {*} targetContainer div#root
@@ -65,4 +71,19 @@ export function dispatchEvent(
     targetInst, //此真实DOM对应的fiber
     targetContainer //目标容器
   )
+}
+
+/**
+ * 获取事件优先级
+ * @param {*} domEventName 事件的名称  click
+ */
+export function getEventPriority(domEventName) {
+  switch (domEventName) {
+    case "click":
+      return DiscreteEventPriority //1
+    case "drag":
+      return ContinuousEventPriority //4
+    default:
+      return DefaultEventPriority //16
+  }
 }

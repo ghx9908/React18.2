@@ -43,7 +43,7 @@ port1.onmessage = performWorkUntilDeadline
  * @param {*} priorityLevel
  * @param {*} callback
  */
-export function scheduleCallback(priorityLevel, callback) {
+function scheduleCallback(priorityLevel, callback) {
   // 获取当前的时候
   const currentTime = getCurrentTime()
   // 此任务的开时间
@@ -162,12 +162,13 @@ function performWorkUntilDeadline() {
   }
 }
 export {
+  scheduleCallback as unstable_scheduleCallback,
   shouldYieldToHost as shouldYield,
-  ImmediatePriority,
-  UserBlockingPriority,
-  NormalPriority,
-  LowPriority,
-  IdlePriority,
+  ImmediatePriority as unstable_ImmediatePriority,
+  UserBlockingPriority as unstable_UserBlockingPriority,
+  NormalPriority as unstable_NormalPriority,
+  LowPriority as unstable_LowPriority,
+  IdlePriority as unstable_IdlePriority,
 }
 
 /*
