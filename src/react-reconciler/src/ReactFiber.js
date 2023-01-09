@@ -5,6 +5,8 @@ import {
   HostText,
 } from "./ReactWorkTags"
 import { NoFlags } from "./ReactFiberFlags"
+import { NoLanes } from "./ReactFiberLane"
+
 /**
  * 创建fiber
  * @param {*} tag fiber的类型 函数组件0  类组件1 原生组件5 根元素3
@@ -48,6 +50,7 @@ export function FiberNode(tag, pendingProps, key) {
   this.index = 0
   // 将要删除的子节点
   this.deletions = null
+  this.lanes = NoLanes
 }
 // We use a double buffering pooling technique because we know that we'll only ever need at most two versions of a tree.
 // We pool the "other" unused  node that we're free to reuse.
