@@ -1,29 +1,28 @@
 import {
-  HostComponent,
-  HostRoot,
-  HostText,
-  FunctionComponent,
-} from "./ReactWorkTags"
-import {
-  Placement,
-  MutationMask,
-  Update,
-  Passive,
-  LayoutMask,
-} from "./ReactFiberFlags"
-
-import {
   appendChild,
   insertBefore,
   commitUpdate,
   removeChild,
 } from "react-dom-bindings/src/client/ReactDOMHostConfig"
 import {
+  Placement,
+  MutationMask,
+  Update,
+  Passive,
+  LayoutMask,
+  Ref,
+} from "./ReactFiberFlags"
+import {
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText,
+} from "./ReactWorkTags"
+import {
   HasEffect as HookHasEffect,
   Passive as HookPassive,
   Layout as HookLayout,
 } from "./ReactHookEffectTags"
-
 let hostParent = null
 /**
  * 提交删除副作用
@@ -50,13 +49,6 @@ function commitDeletionEffects(root, returnFiber, deletedFiber) {
   commitDeletionEffectsOnFiber(root, returnFiber, deletedFiber)
   hostParent = null
 }
-
-/**
- * 删除fiber
- * @param {*} finishedRoot 跟biber
- * @param {*} nearestMountedAncestor 最近的父fiber
- * @param {*} deletedFiber 要删除的fiber
- */
 function commitDeletionEffectsOnFiber(
   finishedRoot,
   nearestMountedAncestor,
@@ -95,7 +87,7 @@ function recursivelyTraverseDeletionEffects(
 /**
  * 递归遍历处理变更的作用
  * @param {*} root 根节点
- * @param {*} parentFiber  父fiber
+ * @param {*} parentFiber 父fiber
  */
 function recursivelyTraverseMutationEffects(root, parentFiber) {
   //先把父fiber上该删除的节点都删除
@@ -103,12 +95,10 @@ function recursivelyTraverseMutationEffects(root, parentFiber) {
   if (deletions !== null) {
     for (let i = 0; i < deletions.length; i++) {
       const childToDelete = deletions[i]
-      //提交删除副作用
       commitDeletionEffects(root, parentFiber, childToDelete)
     }
   }
   //再去处理剩下的子节点
-  //判断是否有副作用
   if (parentFiber.subtreeFlags & MutationMask) {
     let { child } = parentFiber
     while (child !== null) {
@@ -117,7 +107,6 @@ function recursivelyTraverseMutationEffects(root, parentFiber) {
     }
   }
 }
-
 function commitReconciliationEffects(finishedWork) {
   const { flags } = finishedWork
   //如果此fiber要执行插入操作的话
@@ -128,46 +117,33 @@ function commitReconciliationEffects(finishedWork) {
     finishedWork.flags & ~Placement
   }
 }
-/**
- * 判断是否是真实dom节点
- * @param {*} fiber
- * @returns 是否是真实dom节点
- */
 function isHostParent(fiber) {
   return fiber.tag === HostComponent || fiber.tag == HostRoot //div#root
 }
-
-/**
- * 获取父真实dom节点fiber
- * @param {*} fiber
- * @returns 父真实dom节点fiber
- */
 function getHostParentFiber(fiber) {
   let parent = fiber.return
   while (parent !== null) {
-    //判断是否是真实dom节点
     if (isHostParent(parent)) {
       return parent
     }
     parent = parent.return
   }
+  parent
 }
 
 /**
  * 把子节点对应的真实DOM插入到父节点DOM中
  * @param {*} node 将要插入的fiber节点
- * @param {*} before 最近的弟弟真实DOM节点
  * @param {*} parent 父真实DOM节点
  */
 function insertOrAppendPlacementNode(node, before, parent) {
   const { tag } = node
-  //判断此fiber对应的节点是不是真实DOM节点  5|6
+  //判断此fiber对应的节点是不是真实DOM节点
   const isHost = tag === HostComponent || tag === HostText
   //如果是的话直接插入
   if (isHost) {
     const { stateNode } = node
     if (before) {
-      //往最近的弟弟真实DOM 前面插入新的节点
       insertBefore(parent, stateNode, before)
     } else {
       appendChild(parent, stateNode)
@@ -190,7 +166,6 @@ function insertOrAppendPlacementNode(node, before, parent) {
  * 找到要插入的锚点
  * 找到可以插在它的前面的那个fiber对应的真实DOM
  * @param {*} fiber
- * @return 要插入的锚点
  */
 function getHostSibling(fiber) {
   let node = fiber
@@ -216,28 +191,22 @@ function getHostSibling(fiber) {
     }
   }
 }
-
 /**
  * 把此fiber的真实DOM插入到父DOM里
  * @param {*} finishedWork
  */
 function commitPlacement(finishedWork) {
-  // 获取父真实dom节点fiber
   const parentFiber = getHostParentFiber(finishedWork)
-  //查找真实dom节点
   switch (parentFiber.tag) {
     case HostRoot: {
-      const parent = parentFiber.stateNode.containerInfo //父真实dom节点
-      const before = getHostSibling(finishedWork) //获取最近的弟弟真实DOM节点 要插入的锚点
-
-      //插入或者追加插入的节点
+      const parent = parentFiber.stateNode.containerInfo
+      const before = getHostSibling(finishedWork) //获取最近的弟弟真实DOM节点
       insertOrAppendPlacementNode(finishedWork, before, parent)
       break
     }
     case HostComponent: {
-      const parent = parentFiber.stateNode //父真实dom节点
-      const before = getHostSibling(finishedWork) //获取最近的弟弟真实DOM节点
-      //插入或者追加插入的节点
+      const parent = parentFiber.stateNode
+      const before = getHostSibling(finishedWork)
       insertOrAppendPlacementNode(finishedWork, before, parent)
       break
     }
@@ -265,7 +234,6 @@ export function commitMutationEffectsOnFiber(finishedWork, root) {
       break
     }
     case HostRoot:
-
     case HostText: {
       //先遍历它们的子节点，处理它们的子节点上的副作用
       recursivelyTraverseMutationEffects(root, finishedWork)
@@ -278,6 +246,9 @@ export function commitMutationEffectsOnFiber(finishedWork, root) {
       recursivelyTraverseMutationEffects(root, finishedWork)
       //再处理自己身上的副作用
       commitReconciliationEffects(finishedWork)
+      if (flags & Ref) {
+        commitAttachRef(finishedWork)
+      }
       //处理DOM更新
       if (flags & Update) {
         //获取真实DOM
@@ -307,17 +278,21 @@ export function commitMutationEffectsOnFiber(finishedWork, root) {
       break
   }
 }
-/**
- *  执行卸载副作用，destroy
- * @param {*} finishedWork 根fiber
- */
+function commitAttachRef(finishedWork) {
+  const ref = finishedWork.ref
+  if (ref !== null) {
+    const instance = finishedWork.stateNode
+    if (typeof ref === "function") {
+      ref(instance)
+    } else {
+      ref.current = instance
+    }
+  }
+}
+
 export function commitPassiveUnmountEffects(finishedWork) {
   commitPassiveUnmountOnFiber(finishedWork)
 }
-/**
- *  执行卸载副作用，destroy
- * @param {*} finishedWork 根fiber
- */
 function commitPassiveUnmountOnFiber(finishedWork) {
   const flags = finishedWork.flags
   switch (finishedWork.tag) {
@@ -347,20 +322,9 @@ function recursivelyTraversePassiveUnmountEffects(parentFiber) {
     }
   }
 }
-/**
- *
- * @param {*} finishedWork 完成的fiber
- * @param {*} hookFlags flags
- */
 function commitHookPassiveUnmountEffects(finishedWork, hookFlags) {
   commitHookEffectListUnmount(hookFlags, finishedWork)
 }
-
-/**
- *  提交hook链表卸载 执行循环链表
- * @param {*} flags flags
- * @param {*} finishedWork 完成的fiber
- */
 function commitHookEffectListUnmount(flags, finishedWork) {
   const updateQueue = finishedWork.updateQueue
   const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null
@@ -380,45 +344,26 @@ function commitHookEffectListUnmount(flags, finishedWork) {
     } while (effect !== firstEffect)
   }
 }
-/**
- * 执行挂载副作用 create
- * @param {*} root 根节点
- * @param {*} finishedWork 根fiber
- */
 export function commitPassiveMountEffects(root, finishedWork) {
-  //提交副作用fiber上
   commitPassiveMountOnFiber(root, finishedWork)
 }
-/**
- *提交副作用fiber上
- * @param {*} finishedRoot  完成的根节点
- * @param {*} finishedWork  完成的fiber
- */
 function commitPassiveMountOnFiber(finishedRoot, finishedWork) {
-  const flags = finishedWork.flags //取flags
-  switch (
-    finishedWork.tag //取标签类型
-  ) {
+  const flags = finishedWork.flags
+  switch (finishedWork.tag) {
     case HostRoot: {
-      //递归遍历PassiveMountEffects
       recursivelyTraversePassiveMountEffects(finishedRoot, finishedWork)
       break
     }
     case FunctionComponent: {
       recursivelyTraversePassiveMountEffects(finishedRoot, finishedWork)
       if (flags & Passive) {
-        //1024 提交钩子上的MountEffects
+        //1024
         commitHookPassiveMountEffects(finishedWork, HookHasEffect | HookPassive)
       }
       break
     }
   }
 }
-/**
- * 递归遍历PassiveMountEffects
- * @param {*} root 根节点
- * @param {*} parentFiber 父fiber
- */
 function recursivelyTraversePassiveMountEffects(root, parentFiber) {
   if (parentFiber.subtreeFlags & Passive) {
     let child = parentFiber.child
@@ -428,19 +373,9 @@ function recursivelyTraversePassiveMountEffects(root, parentFiber) {
     }
   }
 }
-/**
- *提交钩子上的MountEffects
- * @param {*} finishedWork fiber
- * @param {*} hookFlags flags 8
- */
 function commitHookPassiveMountEffects(finishedWork, hookFlags) {
   commitHookEffectListMount(hookFlags, finishedWork)
 }
-/**
- * 提交hook链表挂载 执行循环链表
- * @param {*} flags flags 9
- * @param {*} finishedWork fiber
- */
 function commitHookEffectListMount(flags, finishedWork) {
   const updateQueue = finishedWork.updateQueue
   const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null
@@ -452,18 +387,13 @@ function commitHookEffectListMount(flags, finishedWork) {
       //如果此 effect类型和传入的相同，都是 9 HookHasEffect | PassiveEffect
       if ((effect.tag & flags) === flags) {
         const create = effect.create
-        //执行create 并且将返回值给 effect.destroy
         effect.destroy = create()
       }
       effect = effect.next
     } while (effect !== firstEffect)
   }
 }
-/**
- *
- * @param {*} finishedWork fiber
- * @param {*} root 根节点
- */
+
 export function commitLayoutEffects(finishedWork, root) {
   //老的根fiber
   const current = finishedWork.alternate
@@ -480,7 +410,7 @@ function commitLayoutEffectOnFiber(finishedRoot, current, finishedWork) {
       recursivelyTraverseLayoutEffects(finishedRoot, finishedWork)
       if (flags & LayoutMask) {
         // LayoutMask=Update=4
-        commitHookLayoutEffects(finishedWork, HookHasEffect | HookLayout) //5
+        commitHookLayoutEffects(finishedWork, HookHasEffect | HookLayout)
       }
       break
     }

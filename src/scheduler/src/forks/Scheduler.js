@@ -50,6 +50,7 @@ function scheduleCallback(priorityLevel, callback) {
   const startTime = currentTime
   //超时时间
   let timeout
+  //根据优先级计算过期的时间
   switch (priorityLevel) {
     case ImmediatePriority:
       timeout = IMMEDIATE_PRIORITY_TIMEOUT // -1
@@ -173,6 +174,7 @@ export {
   LowPriority as unstable_LowPriority,
   IdlePriority as unstable_IdlePriority,
   unstable_cancelCallback,
+  getCurrentTime as now,
 }
 
 /*

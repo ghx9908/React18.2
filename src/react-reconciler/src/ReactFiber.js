@@ -8,7 +8,7 @@ import { NoFlags } from "./ReactFiberFlags"
 import { NoLanes } from "./ReactFiberLane"
 
 /**
- * 创建fiber
+ *
  * @param {*} tag fiber的类型 函数组件0  类组件1 原生组件5 根元素3
  * @param {*} pendingProps 新属性，等待处理或者说生效的属性
  * @param {*} key 唯一标识
@@ -25,19 +25,11 @@ export function FiberNode(tag, pendingProps, key) {
   this.sibling = null //指向弟弟
 
   //fiber哪来的？通过虚拟DOM节点创建，虚拟DOM会提供pendingProps用来创建fiber节点的属性
-  this.pendingProps = pendingProps //等待生效的属性  文本fiber 对应的是文本内容 原生dom对应的是{childern:"world",styles:{color:'red'}}
+  this.pendingProps = pendingProps //等待生效的属性
   this.memoizedProps = null //已经生效的属性
 
   //每个fiber还会有自己的状态，每一种fiber 状态存的类型是不一样的
   //类组件对应的fiber 存的就是类的实例的状态,HostRoot存的就是要渲染的元素
-  //HooksRootFiber存的虚拟din
-  //函数组件存的 是一个hook对象 单链表
-  // const hook = {
-  //   memoizedState: null, //hook的状态 0
-  //   queue: null, //存放本hook的更新队列 queue.pending=update的循环链表
-  //   next: null, //指向下一个hook,一个函数里可以会有多个hook,它们会组成一个单向链表
-  // }
-  // currentRenderingFiber.memoizedState = workInProgressHook = hook
   this.memoizedState = null
   //每个fiber身上可能还有更新队列
   this.updateQueue = null
@@ -48,9 +40,10 @@ export function FiberNode(tag, pendingProps, key) {
   //替身，轮替 在后面讲DOM-DIFF的时候会用到
   this.alternate = null
   this.index = 0
-  // 将要删除的子节点
   this.deletions = null
   this.lanes = NoLanes
+  this.childLanes = NoLanes
+  this.ref = null
 }
 // We use a double buffering pooling technique because we know that we'll only ever need at most two versions of a tree.
 // We pool the "other" unused  node that we're free to reuse.
@@ -58,20 +51,12 @@ export function FiberNode(tag, pendingProps, key) {
 // This is lazily created to avoid allocating
 // extra objects for things that are never updated. It also allow us to
 // reclaim the extra memory if needed.
-/**
- * 创建fiber 给 tag, pendingProps, key 属性赋值 其他的为默认值
- * @param {*} tag 标签类型
- * @param {*} pendingProps 等待生效的属性  文本节节点pendingProps为 文本内容
- * @param {*} key 唯一标识
- * @returns 返回创建fiber
- */
 export function createFiber(tag, pendingProps, key) {
   return new FiberNode(tag, pendingProps, key)
 }
 export function createHostRootFiber() {
   return createFiber(HostRoot, null, null)
 }
-
 /**
  * 基于老的fiber和新的属性创建新的fiber
  * 1.current和workInProgress不是一个对象
@@ -105,9 +90,12 @@ export function createWorkInProgress(current, pendingProps) {
   workInProgress.updateQueue = current.updateQueue
   workInProgress.sibling = current.sibling
   workInProgress.index = current.index
+  workInProgress.ref = current.ref
+  workInProgress.flags = current.flags
+  workInProgress.lanes = current.lanes
+  workInProgress.childLanes = current.childLanes
   return workInProgress
 }
-
 /**
  * 根据虚拟DOM创建Fiber节点
  * @param {*} element
@@ -116,6 +104,7 @@ export function createFiberFromElement(element) {
   const { type, key, props: pendingProps } = element
   return createFiberFromTypeAndProps(type, key, pendingProps)
 }
+
 function createFiberFromTypeAndProps(type, key, pendingProps) {
   let tag = IndeterminateComponent //
   //如果类型type是一字符串 span div ，说此此Fiber类型是一个原生组件
@@ -126,12 +115,7 @@ function createFiberFromTypeAndProps(type, key, pendingProps) {
   fiber.type = type
   return fiber
 }
-/**
- *  创建的fiber 给 tag， pendingProps ，key赋值
- * @param content 文本字符内容
- * @return 创建的fiber 给 tag， pendingProps ，key赋值
- */
+
 export function createFiberFromText(content) {
-  //创建的文本fiber 给 tag， pendingProps ，key赋值
-  return createFiber(HostText, content, null) //(6,hello,null)
+  return createFiber(HostText, content, null)
 }

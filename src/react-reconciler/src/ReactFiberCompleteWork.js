@@ -1,30 +1,32 @@
-import logger, { indent } from "shared/logger"
+import {
+  createTextInstance,
+  createInstance,
+  appendInitialChild,
+  finalizeInitialChildren,
+  prepareUpdate,
+} from "react-dom-bindings/src/client/ReactDOMHostConfig"
+import { NoFlags, Update, Ref } from "./ReactFiberFlags"
 import {
   HostComponent,
   HostRoot,
   HostText,
   FunctionComponent,
 } from "./ReactWorkTags"
-import { NoFlags, Update } from "./ReactFiberFlags"
+import { NoLanes, mergeLanes } from "./ReactFiberLane"
 
-import {
-  createTextInstance,
-  createInstance,
-  finalizeInitialChildren,
-  appendInitialChild,
-  prepareUpdate,
-} from "react-dom-bindings/src/client/ReactDOMHostConfig"
+function markRef(workInProgress) {
+  workInProgress.flags |= Ref
+}
 /**
  * 把当前的完成的fiber所有的子节点对应的真实DOM都挂载到自己父parent真实DOM节点上
  * @param {*} parent 当前完成的fiber真实的DOM节点
  * @param {*} workInProgress 完成的fiber
  */
 function appendAllChildren(parent, workInProgress) {
-  let node = workInProgress.child //获取子fiber
+  let node = workInProgress.child
   while (node) {
-    //如果子节点类型是一个原生节点或者是一个文节本点
+    //如果子节点类型是一个原生节点或者是一个文件节点
     if (node.tag === HostComponent || node.tag === HostText) {
-      //子dom节点插入到父dom节点上
       appendInitialChild(parent, node.stateNode)
       //如果第一个儿子不是一个原生节点，说明它可能是一个函数组件
     } else if (node.child !== null) {
@@ -66,67 +68,68 @@ function updateHostComponent(current, workInProgress, type, newProps) {
     markUpdate(workInProgress)
   }
 }
-
 /**
- * 完成一个fiber节点 创建真实dom节点 fiber.stateNode, fiber.fibersubtreeFlags fiber.flags赋值
+ * 完成一个fiber节点
  * @param {*} current 老fiber
  * @param {*} workInProgress 新的构建的fiber
  */
 export function completeWork(current, workInProgress) {
-  indent.number -= 2
-  logger(" ".repeat(indent.number) + "completeWork", workInProgress)
   const newProps = workInProgress.pendingProps
   switch (workInProgress.tag) {
     case HostRoot:
       bubbleProperties(workInProgress)
       break
+    //如果完成的是原生节点的话
+    case HostComponent:
+      ///现在只是在处理创建或者说挂载新节点的逻辑，后面此处分进行区分是初次挂载还是更新
+      //创建真实的DOM节点
+      const { type } = workInProgress
+      //如果老fiber存在，并且老fiber上真实DOM节点，要走节点更新的逻辑
+      if (current !== null && workInProgress.stateNode !== null) {
+        updateHostComponent(current, workInProgress, type, newProps)
+        if ((current.ref !== workInProgress.ref) !== null) {
+          markRef(workInProgress)
+        }
+      } else {
+        const instance = createInstance(type, newProps, workInProgress)
+        //把自己所有的儿子都添加到自己的身上
+        appendAllChildren(instance, workInProgress)
+        workInProgress.stateNode = instance
+        finalizeInitialChildren(instance, type, newProps)
+        if (workInProgress.ref !== null) {
+          markRef(workInProgress)
+        }
+      }
+      bubbleProperties(workInProgress)
+      break
     case FunctionComponent:
       bubbleProperties(workInProgress)
       break
-    case HostComponent: // 5如果完成的是原生节点的话
-      ///现在只是在处理创建或者说挂载新节点的逻辑，后面此处分进行区分是初次挂载还是更新
-      //创建真实的DOM节点
-      const { type } = workInProgress //span
-      if (current !== null && workInProgress.stateNode !== null) {
-        updateHostComponent(current, workInProgress, type, newProps)
-      } else {
-        //创建真实DOM节点并且返回
-        const instance = createInstance(type, newProps, workInProgress) //新创建的真实dom节点
-        //把自己所有的儿子都添加到自己的身上
-
-        appendAllChildren(instance, workInProgress) //span 没有子fiber
-        //创建真实的DOM节点并传入stateNode
-        workInProgress.stateNode = instance
-        // 把 workInProgress.pendingProps 内容挂载到dom上
-        // node.style.color = red node.textContent = text node.setAttribute(name, value)
-        finalizeInitialChildren(instance, type, newProps) //设置初始属性
-      }
-
-      // 向上冒泡属性,将子节点的副作用挂载到自己身上  fiber.subtreeFlags = subtreeFlags;
-      bubbleProperties(workInProgress)
-      break
-    case HostText: //6 文本节点
+    case HostText:
       //如果完成的fiber是文本节点，那就创建真实的文本节点
       const newText = newProps
       //创建真实的DOM节点并传入stateNode
       workInProgress.stateNode = createTextInstance(newText)
-      // 向上冒泡属性,将子节点的副作用挂载到自己身上  fiber.subtreeFlags = subtreeFlags;
+      //向上冒泡属性
       bubbleProperties(workInProgress)
       break
   }
 }
-/**
- *  向上冒泡属性,将子节点的副作用挂载到自己身上  fiber.subtreeFlags = subtreeFlags;
- * @param {*} completedWork  新的构建的fiber
- */
+
 function bubbleProperties(completedWork) {
+  let newChildLanes = NoLanes
   let subtreeFlags = NoFlags
   //遍历当前fiber的所有子节点，把所有的子节的副作用，以及子节点的子节点的副作用全部合并
   let child = completedWork.child
   while (child !== null) {
+    newChildLanes = mergeLanes(
+      newChildLanes,
+      mergeLanes(child.lanes, child.childLanes)
+    )
     subtreeFlags |= child.subtreeFlags
     subtreeFlags |= child.flags
     child = child.sibling
   }
+  completedWork.childLanes = newChildLanes
   completedWork.subtreeFlags = subtreeFlags
 }

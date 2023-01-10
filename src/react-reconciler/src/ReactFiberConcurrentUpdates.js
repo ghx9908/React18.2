@@ -1,9 +1,11 @@
 import { HostRoot } from "./ReactWorkTags"
+import { mergeLanes } from "./ReactFiberLane"
+
 const concurrentQueues = []
 let concurrentQueuesIndex = 0
 
 /**
- * 把更新先缓存到concurrentQueues数组中
+ * 把更新先缓存到concurrentQueue数组中
  * @param {*} fiber
  * @param {*} queue
  * @param {*} update
@@ -14,6 +16,8 @@ function enqueueUpdate(fiber, queue, update, lane) {
   concurrentQueues[concurrentQueuesIndex++] = queue //要更新的hook对应的更新队列
   concurrentQueues[concurrentQueuesIndex++] = update //更新对象
   concurrentQueues[concurrentQueuesIndex++] = lane //更新对应的赛道
+  //当我们向一个fiber上添加一个更新的时候，要把此更新的赛道合并到此fiber的赛道上
+  fiber.lanes = mergeLanes(fiber.lanes, lane)
 }
 
 export function finishQueueingConcurrentUpdates() {
@@ -37,7 +41,6 @@ export function finishQueueingConcurrentUpdates() {
     }
   }
 }
-
 /**
  * 把更新队列添加到更新队列中
  * @param {*} fiber 函数组件对应的fiber
@@ -68,17 +71,3 @@ function getRootForUpdatedFiber(sourceFiber) {
   }
   return node.tag === HostRoot ? node.stateNode : null //FiberRootNode div#root
 }
-
-// export function markUpdateLaneFromFiberToRoot(sourceFiber) {
-//   let node = sourceFiber
-//   let parent = sourceFiber.return
-//   while (parent !== null) {
-//     node = parent
-//     parent = parent.return
-//   }
-//   if (node.tag === HostRoot) {
-//     const root = node.stateNode
-//     return root
-//   }
-//   return null
-// }
