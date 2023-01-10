@@ -5,3 +5,4 @@ export const ImmediatePriority = Scheduler.unstable_ImmediatePriority
 export const UserBlockingPriority = Scheduler.unstable_UserBlockingPriority
 export const NormalPriority = Scheduler.unstable_NormalPriority
 export const IdlePriority = Scheduler.unstable_IdlePriority
+export const cancelCallback = Scheduler.unstable_cancelCallback

@@ -3,14 +3,21 @@ import { createRoot } from "react-dom/client"
 
 function FunctionComponent() {
   console.log("FunctionComponent")
-  const [number, setNumber] = React.useState(0)
-  // 默认渲染16 点击事件1 useEffect里16
+  const [numbers, setNumbers] = React.useState(new Array(10).fill("A"))
   React.useEffect(() => {
-    //车道就是默认 16
-    setNumber((number) => number + 1)
+    setTimeout(() => {}, 10)
+    setNumbers((numbers) => numbers.map((number) => number + "B"))
   }, [])
   return (
-    <button onClick={() => setNumber((number) => number + 1)}>{number}</button>
+    <button
+      onClick={() =>
+        setNumbers((numbers) => numbers.map((number) => number + "C"))
+      }
+    >
+      {numbers.map((number, index) => (
+        <span key={index}>{number}</span>
+      ))}
+    </button>
   )
 }
 let element = <FunctionComponent />

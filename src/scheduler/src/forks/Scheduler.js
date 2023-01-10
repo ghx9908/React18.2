@@ -161,6 +161,9 @@ function performWorkUntilDeadline() {
     }
   }
 }
+function unstable_cancelCallback(task) {
+  task.callback = null
+}
 export {
   scheduleCallback as unstable_scheduleCallback,
   shouldYieldToHost as unstable_shouldYield,
@@ -169,6 +172,7 @@ export {
   NormalPriority as unstable_NormalPriority,
   LowPriority as unstable_LowPriority,
   IdlePriority as unstable_IdlePriority,
+  unstable_cancelCallback,
 }
 
 /*
