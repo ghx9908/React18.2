@@ -1,14 +1,5 @@
-import {
-  HostComponent,
-  HostRoot,
-  HostText,
-  IndeterminateComponent,
-  FunctionComponent,
-} from "./ReactWorkTags"
-import {
-  processUpdateQueue,
-  cloneUpdateQueue,
-} from "./ReactFiberClassUpdateQueue"
+import { HostComponent, HostRoot, HostText, IndeterminateComponent, FunctionComponent } from "./ReactWorkTags"
+import { processUpdateQueue, cloneUpdateQueue } from "./ReactFiberClassUpdateQueue"
 import { mountChildFibers, reconcileChildFibers } from "./ReactChildFiber"
 import { shouldSetTextContent } from "react-dom-bindings/src/client/ReactDOMHostConfig"
 import { renderWithHooks } from "react-reconciler/src/ReactFiberHooks"
@@ -27,16 +18,13 @@ function reconcileChildren(current, workInProgress, nextChildren) {
     workInProgress.child = mountChildFibers(workInProgress, null, nextChildren)
   } else {
     //如果说有老Fiber的话，做DOM-DIFF 拿老的子fiber链表和新的子虚拟DOM进行比较 ，进行最小化的更新
-    workInProgress.child = reconcileChildFibers(
-      workInProgress,
-      current.child,
-      nextChildren
-    )
+    workInProgress.child = reconcileChildFibers(workInProgress, current.child, nextChildren)
   }
 }
+// 根据虚拟DOM创建Fiber
 function updateHostRoot(current, workInProgress, renderLanes) {
-  const nextProps = workInProgress.pendingProps
-  cloneUpdateQueue(current, workInProgress)
+  const nextProps = workInProgress.pendingProps //拿到新的props
+  cloneUpdateQueue(current, workInProgress) //clone 更新队列
   //需要知道它的子虚拟DOM，知道它的儿子的虚拟DOM信息
   processUpdateQueue(workInProgress, nextProps, renderLanes) //workInProgress.memoizedState={ element }
   const nextState = workInProgress.memoizedState
@@ -69,11 +57,7 @@ function updateHostComponent(current, workInProgress) {
  * @param {*} workInProgress 新的fiber
  * @param {*} Component 组件类型，也就是函数组件的定义
  */
-export function mountIndeterminateComponent(
-  current,
-  workInProgress,
-  Component
-) {
+export function mountIndeterminateComponent(current, workInProgress, Component) {
   const props = workInProgress.pendingProps
   //const value = Component(props);
   const value = renderWithHooks(current, workInProgress, Component, props)
@@ -81,20 +65,8 @@ export function mountIndeterminateComponent(
   reconcileChildren(current, workInProgress, value)
   return workInProgress.child
 }
-export function updateFunctionComponent(
-  current,
-  workInProgress,
-  Component,
-  nextProps,
-  renderLanes
-) {
-  const nextChildren = renderWithHooks(
-    current,
-    workInProgress,
-    Component,
-    nextProps,
-    renderLanes
-  )
+export function updateFunctionComponent(current, workInProgress, Component, nextProps, renderLanes) {
+  const nextChildren = renderWithHooks(current, workInProgress, Component, nextProps, renderLanes)
   reconcileChildren(current, workInProgress, nextChildren)
   return workInProgress.child
 }
@@ -110,22 +82,11 @@ export function beginWork(current, workInProgress, renderLanes) {
   switch (workInProgress.tag) {
     // 因为在React里组件其实有两种，一种是函数组件，一种是类组件，但是它们都是都是函数
     case IndeterminateComponent:
-      return mountIndeterminateComponent(
-        current,
-        workInProgress,
-        workInProgress.type,
-        renderLanes
-      )
+      return mountIndeterminateComponent(current, workInProgress, workInProgress.type, renderLanes)
     case FunctionComponent: {
       const Component = workInProgress.type
       const nextProps = workInProgress.pendingProps
-      return updateFunctionComponent(
-        current,
-        workInProgress,
-        Component,
-        nextProps,
-        renderLanes
-      )
+      return updateFunctionComponent(current, workInProgress, Component, nextProps, renderLanes)
     }
     case HostRoot:
       return updateHostRoot(current, workInProgress, renderLanes)

@@ -43,10 +43,7 @@ import {
   setCurrentUpdatePriority,
 } from "./ReactEventPriorities"
 import { getCurrentEventPriority } from "react-dom-bindings/src/client/ReactDOMHostConfig"
-import {
-  scheduleSyncCallback,
-  flushSyncCallbacks,
-} from "./ReactFiberSyncTaskQueue"
+import { scheduleSyncCallback, flushSyncCallbacks } from "./ReactFiberSyncTaskQueue"
 
 let workInProgress = null
 let workInProgressRoot = null //正在构建中的根节点
@@ -69,17 +66,18 @@ let currentEventTime = NoTimestamp
  * @param {*} root
  */
 export function scheduleUpdateOnFiber(root, fiber, lane, eventTime) {
-  markRootUpdated(root, lane)
+  markRootUpdated(root, lane) //标记根节点有更新 root.pendingLanes |= lane
   //确保调度执行root上的更新
   ensureRootIsScheduled(root, eventTime)
 }
+// 根节点调度跟新
 function ensureRootIsScheduled(root, currentTime) {
   //先获取当前根上执行任务
   const existingCallbackNode = root.callbackNode
   //把所有饿死的赛道标记为过期
   markStarvedLanesAsExpired(root, currentTime)
   //获取当前优先级最高的车道
-  const nextLanes = getNextLanes(root, workInProgressRootRenderLanes) //16
+  const nextLanes = getNextLanes(root, workInProgressRootRenderLanes) // 初次渲染16
   //如果没有要执行的任务
   if (nextLanes === NoLanes) {
     return
@@ -98,38 +96,37 @@ function ensureRootIsScheduled(root, currentTime) {
   }
   //新的回调任务
   let newCallbackNode = null
-  //如果新的优先级是同步的话
+  //如果新的优先级是同步的话  // SyncLane = 1
   if (newCallbackPriority === SyncLane) {
     //先把performSyncWorkOnRoot添回到同步队列中
     scheduleSyncCallback(performSyncWorkOnRoot.bind(null, root))
-    //再把flushSyncCallbacks放入微任务
+    //再把flushSyncCallbacks放入微任务 执行performSyncWorkOnRoot同步任务
     queueMicrotask(flushSyncCallbacks)
     //如果是同步执行的话
     newCallbackNode = null
   } else {
     //如果不是同步，就需要调度一个新的任务
     let schedulerPriorityLevel
+    //把lane转成事件优先级 1 4 16
     switch (lanesToEventPriority(nextLanes)) {
-      case DiscreteEventPriority:
+      // 将事件优先级变为调度优先级
+      case DiscreteEventPriority: //1离散事件
         schedulerPriorityLevel = ImmediateSchedulerPriority
         break
-      case ContinuousEventPriority:
+      case ContinuousEventPriority: // 4连续事件
         schedulerPriorityLevel = UserBlockingSchedulerPriority
         break
-      case DefaultEventPriority:
+      case DefaultEventPriority: // 16默认事件
         schedulerPriorityLevel = NormalSchedulerPriority
         break
-      case IdleEventPriority:
+      case IdleEventPriority: //空闲事件优先级
         schedulerPriorityLevel = IdleSchedulerPriority
         break
       default:
         schedulerPriorityLevel = NormalSchedulerPriority
         break
     }
-    newCallbackNode = Scheduler_scheduleCallback(
-      schedulerPriorityLevel,
-      performConcurrentWorkOnRoot.bind(null, root)
-    )
+    newCallbackNode = Scheduler_scheduleCallback(schedulerPriorityLevel, performConcurrentWorkOnRoot.bind(null, root))
   }
   //在根节点的执行的任务是newCallbackNode
   root.callbackNode = newCallbackNode
@@ -174,13 +171,10 @@ function performConcurrentWorkOnRoot(root, didTimeout) {
   //时间片没有过期
   const nonTimeout = !didTimeout
   //三个变量都是真，才能进行时间分片，也就是进行并发渲染，也就是可以中断执行
-  const shouldTimeSlice =
-    nonIncludesBlockingLane && nonIncludesExpiredLane && nonTimeout
+  const shouldTimeSlice = nonIncludesBlockingLane && nonIncludesExpiredLane && nonTimeout
   // console.log('shouldTimeSlice', shouldTimeSlice);
   //执行渲染，得到退出的状态
-  const exitStatus = shouldTimeSlice
-    ? renderRootConcurrent(root, lanes)
-    : renderRootSync(root, lanes)
+  const exitStatus = shouldTimeSlice ? renderRootConcurrent(root, lanes) : renderRootSync(root, lanes)
   //如果不是渲染中的话，那说明肯定渲染完了
   if (exitStatus !== RootInProgress) {
     const finishedWork = root.current.alternate
@@ -239,18 +233,14 @@ function commitRootImpl(root) {
   //合并统计当前新的根上剩下的车道
   const remainingLanes = mergeLanes(finishedWork.lanes, finishedWork.childLanes)
   markRootFinished(root, remainingLanes)
-  if (
-    (finishedWork.subtreeFlags & Passive) !== NoFlags ||
-    (finishedWork.flags & Passive) !== NoFlags
-  ) {
+  if ((finishedWork.subtreeFlags & Passive) !== NoFlags || (finishedWork.flags & Passive) !== NoFlags) {
     if (!rootDoesHavePassiveEffect) {
       rootDoesHavePassiveEffect = true
       Scheduler_scheduleCallback(NormalSchedulerPriority, flushPassiveEffect)
     }
   }
   //判断子树有没有副作用
-  const subtreeHasEffects =
-    (finishedWork.subtreeFlags & MutationMask) !== NoFlags
+  const subtreeHasEffects = (finishedWork.subtreeFlags & MutationMask) !== NoFlags
   const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags
   //如果自己的副作用或者子节点有副作用就进行提交DOM操作
   if (subtreeHasEffects || rootHasEffect) {
@@ -276,10 +266,7 @@ function prepareFreshStack(root, renderLanes) {
 }
 function renderRootSync(root, renderLanes) {
   //如果新的根和老的根不一样，或者新的渲染优先级和老的渲染优先级不一样
-  if (
-    root !== workInProgressRoot ||
-    workInProgressRootRenderLanes !== renderLanes
-  ) {
+  if (root !== workInProgressRoot || workInProgressRootRenderLanes !== renderLanes) {
     prepareFreshStack(root, renderLanes)
   }
   workLoopSync()
@@ -341,12 +328,13 @@ function completeUnitOfWork(unitOfWork) {
   }
 }
 
+// 请求一个更新车道
 export function requestUpdateLane() {
-  const updateLane = getCurrentUpdatePriority()
+  const updateLane = getCurrentUpdatePriority() //获取当前的更新优先级 默认NoLanes
   if (updateLane !== NoLanes) {
-    return updateLane
+    return updateLane //有的话就返回
   }
-  const eventLane = getCurrentEventPriority()
+  const eventLane = getCurrentEventPriority() // 获取当前事件优先级
   return eventLane
 }
 function sleep(duration) {

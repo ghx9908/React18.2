@@ -16,11 +16,7 @@ import {
  * @param {*} eventSystemFlags 0 4
  * @returns
  */
-export function createEventListenerWrapperWithPriority(
-  targetContainer,
-  domEventName,
-  eventSystemFlags
-) {
+export function createEventListenerWrapperWithPriority(targetContainer, domEventName, eventSystemFlags) {
   // 派发离散的事件的的监听函数
   const listenerWrapper = dispatchDiscreteEvent //
   return listenerWrapper.bind(
@@ -38,12 +34,7 @@ export function createEventListenerWrapperWithPriority(
  * @param {*} container 容器div#root
  * @param {*} nativeEvent 原生的事件
  */
-function dispatchDiscreteEvent(
-  domEventName,
-  eventSystemFlags,
-  container,
-  nativeEvent
-) {
+function dispatchDiscreteEvent(domEventName, eventSystemFlags, container, nativeEvent) {
   //在你是点击按钮的时候，需要设置更新优先级
   //先获取当前老的更新优先级
   const previousPriority = getCurrentUpdatePriority()
@@ -64,12 +55,7 @@ function dispatchDiscreteEvent(
  * @param {*} targetContainer 容器div#root
  * @param {*} nativeEvent 原生的事件
  */
-export function dispatchEvent(
-  domEventName,
-  eventSystemFlags,
-  targetContainer,
-  nativeEvent
-) {
+export function dispatchEvent(domEventName, eventSystemFlags, targetContainer, nativeEvent) {
   //获取事件源，它是一个真实DOM
   const nativeEventTarget = getEventTarget(nativeEvent)
   //从真实的DOM节点上获取它对应的fiber实例
@@ -85,15 +71,77 @@ export function dispatchEvent(
 }
 
 /**
- * 获取事件优先级
+ * 通过类型获取事件优先级
  * @param {*} domEventName 事件的名称  click
  */
 export function getEventPriority(domEventName) {
   switch (domEventName) {
+    case "cancel":
     case "click":
-      return DiscreteEventPriority //1
+    case "close":
+    case "contextmenu":
+    case "copy":
+    case "cut":
+    case "auxclick":
+    case "dblclick":
+    case "dragend":
+    case "dragstart":
+    case "drop":
+    case "focusin":
+    case "focusout":
+    case "input":
+    case "invalid":
+    case "keydown":
+    case "keypress":
+    case "keyup":
+    case "mousedown":
+    case "mouseup":
+    case "paste":
+    case "pause":
+    case "play":
+    case "pointercancel":
+    case "pointerdown":
+    case "pointerup":
+    case "ratechange":
+    case "reset":
+    case "resize":
+    case "seeked":
+    case "submit":
+    case "touchcancel":
+    case "touchend":
+    case "touchstart":
+    case "volumechange":
+    // Used by polyfills:
+    // eslint-disable-next-line no-fallthrough
+    case "change":
+    case "selectionchange":
+    case "textInput":
+    case "compositionstart":
+    case "compositionend":
+    case "compositionupdate":
+      return DiscreteEventPriority //1 离散事件
     case "drag":
-      return ContinuousEventPriority //4
+    case "dragenter":
+    case "dragexit":
+    case "dragleave":
+    case "dragover":
+    case "mousemove":
+    case "mouseout":
+    case "mouseover":
+    case "pointermove":
+    case "pointerout":
+    case "pointerover":
+    case "scroll":
+    case "toggle":
+    case "touchmove":
+    case "wheel":
+    // Not used by React but could be by user code:
+    // eslint-disable-next-line no-fallthrough
+    case "mouseenter":
+    case "mouseleave":
+    case "pointerenter":
+    case "pointerleave":
+      return ContinuousEventPriority //4 连续事件
     default:
       return DefaultEventPriority //16
   }

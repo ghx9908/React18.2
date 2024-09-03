@@ -18,15 +18,18 @@ export function initialUpdateQueue(fiber) {
   fiber.updateQueue = queue
 }
 
+// 创建一个更新对象 指定优先级
 export function createUpdate(lane) {
   const update = { tag: UpdateState, lane, next: null }
   return update
 }
+// 入队更新
 export function enqueueUpdate(fiber, update, lane) {
   //获取更新队列
   const updateQueue = fiber.updateQueue
   //获取共享队列
   const sharedQueue = updateQueue.shared
+  // 入队并发的跟新
   return enqueueConcurrentClassUpdate(fiber, sharedQueue, update, lane)
 }
 /**
@@ -139,10 +142,11 @@ function getStateFromUpdate(update, prevState, nextProps) {
 }
 
 export function cloneUpdateQueue(current, workInProgress) {
-  const workInProgressQueue = workInProgress.updateQueue
-  const currentQueue = current.updateQueue
+  const workInProgressQueue = workInProgress.updateQueue //新的更新队列
+  const currentQueue = current.updateQueue // 老的更新队列
   //如果新的队列和老的队列不是同一个对象的话
   if (currentQueue === workInProgressQueue) {
+    //如果相等，说明是同一个对象，直接克隆一份
     const clone = {
       baseState: currentQueue.baseState,
       firstBaseUpdate: currentQueue.firstBaseUpdate,

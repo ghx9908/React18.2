@@ -1,8 +1,4 @@
-import {
-  setInitialProperties,
-  diffProperties,
-  updateProperties,
-} from "./ReactDOMComponent"
+import { setInitialProperties, diffProperties, updateProperties } from "./ReactDOMComponent"
 import { precacheFiberNode, updateFiberProps } from "./ReactDOMComponentTree"
 import { DefaultEventPriority } from "react-reconciler/src/ReactEventPriorities"
 import { getEventPriority } from "../events/ReactDOMEventListener"
@@ -14,9 +10,7 @@ import { getEventPriority } from "../events/ReactDOMEventListener"
  * @returns
  */
 export function shouldSetTextContent(type, props) {
-  return (
-    typeof props.children === "string" || typeof props.children === "number"
-  )
+  return typeof props.children === "string" || typeof props.children === "number"
 }
 
 /**
@@ -86,13 +80,7 @@ export function prepareUpdate(domElement, type, oldProps, newProps) {
   return diffProperties(domElement, type, oldProps, newProps)
 }
 
-export function commitUpdate(
-  domElement,
-  updatePayload,
-  type,
-  oldProps,
-  newProps
-) {
+export function commitUpdate(domElement, updatePayload, type, oldProps, newProps) {
   updateProperties(domElement, updatePayload, type, oldProps, newProps)
   updateFiberProps(domElement, newProps)
 }
@@ -105,10 +93,10 @@ export function removeChild(parentInstance, child) {
  * @returns
  */
 export function getCurrentEventPriority() {
-  const currentEvent = window.event
+  const currentEvent = window.event // 看是否有事件
   if (currentEvent === undefined) {
     //当前没有任何事件 返回默认事件优先级
     return DefaultEventPriority //16 初次渲染16
   }
-  return getEventPriority(currentEvent.type)
+  return getEventPriority(currentEvent.type) //根据事件类型获取事件优先级
 }

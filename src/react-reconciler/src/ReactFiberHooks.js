@@ -1,19 +1,8 @@
 import ReactSharedInternals from "shared/ReactSharedInternals"
-import {
-  scheduleUpdateOnFiber,
-  requestUpdateLane,
-  requestEventTime,
-} from "./ReactFiberWorkLoop"
+import { scheduleUpdateOnFiber, requestUpdateLane, requestEventTime } from "./ReactFiberWorkLoop"
 import { enqueueConcurrentHookUpdate } from "./ReactFiberConcurrentUpdates"
-import {
-  Passive as PassiveEffect,
-  Update as UpdateEffect,
-} from "./ReactFiberFlags"
-import {
-  HasEffect as HookHasEffect,
-  Passive as HookPassive,
-  Layout as HookLayout,
-} from "./ReactHookEffectTags"
+import { Passive as PassiveEffect, Update as UpdateEffect } from "./ReactFiberFlags"
+import { HasEffect as HookHasEffect, Passive as HookPassive, Layout as HookLayout } from "./ReactHookEffectTags"
 import { NoLane, NoLanes, isSubsetOfLanes, mergeLanes } from "./ReactFiberLane"
 
 const { ReactCurrentDispatcher } = ReactSharedInternals
@@ -80,12 +69,7 @@ function updateEffectImpl(fiberFlags, hookFlags, create, deps) {
   currentlyRenderingFiber.flags |= fiberFlags
   //如果要执行的话 添加HookHasEffect flag
   //刚才有同学问 Passive还需HookHasEffect,因为不是每个Passive都会执行的
-  hook.memoizedState = pushEffect(
-    HookHasEffect | hookFlags,
-    create,
-    destroy,
-    nextDeps
-  )
+  hook.memoizedState = pushEffect(HookHasEffect | hookFlags, create, destroy, nextDeps)
 }
 function areHookInputsEqual(nextDeps, prevDeps) {
   if (prevDeps === null) return null
@@ -108,12 +92,7 @@ function mountEffectImpl(fiberFlags, hookFlags, create, deps) {
   const nextDeps = deps === undefined ? null : deps
   //给当前的函数组件fiber添加flags
   currentlyRenderingFiber.flags |= fiberFlags
-  hook.memoizedState = pushEffect(
-    HookHasEffect | hookFlags,
-    create,
-    undefined,
-    nextDeps
-  )
+  hook.memoizedState = pushEffect(HookHasEffect | hookFlags, create, undefined, nextDeps)
 }
 /**
  * 添加effect链表
@@ -176,11 +155,7 @@ function mountState(initialState) {
     lastRenderedState: initialState, //上一个state
   }
   hook.queue = queue
-  const dispatch = (queue.dispatch = dispatchSetState.bind(
-    null,
-    currentlyRenderingFiber,
-    queue
-  ))
+  const dispatch = (queue.dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue))
   return [hook.memoizedState, dispatch]
 }
 function dispatchSetState(fiber, queue, action) {
@@ -197,10 +172,7 @@ function dispatchSetState(fiber, queue, action) {
 
   //当你派发动作后，我立刻用上一次的状态和上一次的reducer计算新状态
   //只要第一个更新都能进行此项优化
-  if (
-    fiber.lanes === NoLanes &&
-    (alternate === null || alternate.lanes == NoLanes)
-  ) {
+  if (fiber.lanes === NoLanes && (alternate === null || alternate.lanes == NoLanes)) {
     //先获取队列上的老的状态和老的reducer
     const { lastRenderedReducer, lastRenderedState } = queue
     //使用上次的状态和上次的reducer结合本次action进行计算新状态
@@ -285,10 +257,7 @@ function updateReducer(reducer) {
         } else {
           newBaseQueueLast = newBaseQueueLast.next = clone
         }
-        currentlyRenderingFiber.lanes = mergeLanes(
-          currentlyRenderingFiber.lanes,
-          updateLane
-        )
+        currentlyRenderingFiber.lanes = mergeLanes(currentlyRenderingFiber.lanes, updateLane)
       } else {
         if (newBaseQueueLast !== null) {
           const clone = {
@@ -300,6 +269,7 @@ function updateReducer(reducer) {
           }
           newBaseQueueLast = newBaseQueueLast.next = clone
         }
+        debugger
         if (update.hasEagerState) {
           newState = update.eagerState
         } else {
@@ -346,11 +316,7 @@ function mountReducer(reducer, initialArg) {
     lastRenderedState: initialArg,
   }
   hook.queue = queue
-  const dispatch = (queue.dispatch = dispatchReducerAction.bind(
-    null,
-    currentlyRenderingFiber,
-    queue
-  ))
+  const dispatch = (queue.dispatch = dispatchReducerAction.bind(null, currentlyRenderingFiber, queue))
   return [hook.memoizedState, dispatch]
 }
 /**
@@ -397,13 +363,7 @@ function mountWorkInProgressHook() {
  * @param {*} props 组件属性
  * @returns 虚拟DOM或者说React元素
  */
-export function renderWithHooks(
-  current,
-  workInProgress,
-  Component,
-  props,
-  nextRenderLanes
-) {
+export function renderWithHooks(current, workInProgress, Component, props, nextRenderLanes) {
   //当前正在渲染的车道
   renderLanes = nextRenderLanes
   currentlyRenderingFiber = workInProgress

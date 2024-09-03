@@ -9,6 +9,7 @@ let concurrentQueuesIndex = 0
  * @param {*} fiber
  * @param {*} queue
  * @param {*} update
+ * @param {*} lane 更新对应的赛道
  */
 function enqueueUpdate(fiber, queue, update, lane) {
   //012 setNumber1 345 setNumber2 678 setNumber3
@@ -52,16 +53,18 @@ export function enqueueConcurrentHookUpdate(fiber, queue, update, lane) {
   return getRootForUpdatedFiber(fiber)
 }
 /**
- * 把更新入队
+ * 把更新入队 入队并发的类的更新
  * @param {*} fiber 入队的fiber 根fiber
  * @param {*} queue shareQueue 待生效的队列
  * @param {*} update 更新
  * @param {*} lane 此更新的车道
  */
 export function enqueueConcurrentClassUpdate(fiber, queue, update, lane) {
-  enqueueUpdate(fiber, queue, update, lane)
-  return getRootForUpdatedFiber(fiber)
+  enqueueUpdate(fiber, queue, update, lane) // 把更新先缓存到concurrentQueue数组中
+  return getRootForUpdatedFiber(fiber) // 返回根节点
 }
+
+// 获取跟节点
 function getRootForUpdatedFiber(sourceFiber) {
   let node = sourceFiber
   let parent = node.return
