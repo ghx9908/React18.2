@@ -87,7 +87,6 @@ function processUpdateQueue(fiber, renderLanes) {
           lane: updateLane,
           payload: update.payload,
         }
-        debugger
         //说明新的跳过的base链表为空,说明当前这个更新是第一个跳过的更新
         if (newLastBaseUpdate === null) {
           //让新的跳过的链表头和链表尾都指向这个第一次跳过的更新
@@ -142,7 +141,6 @@ let updateC = { id: "C", payload: (state) => state + "C", lane: SyncLane }
 enqueueUpdate(fiber, updateC)
 let updateD = { id: "D", payload: (state) => state + "D", lane: SyncLane }
 enqueueUpdate(fiber, updateD)
-debugger
 //处理新队列 在处理的时候需要指定一个渲染优先级
 processUpdateQueue(fiber, SyncLane)
 console.log(fiber.memoizedState) //ABD

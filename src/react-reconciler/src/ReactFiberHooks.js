@@ -269,7 +269,6 @@ function updateReducer(reducer) {
           }
           newBaseQueueLast = newBaseQueueLast.next = clone
         }
-        debugger
         if (update.hasEagerState) {
           newState = update.eagerState
         } else {

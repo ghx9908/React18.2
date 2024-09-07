@@ -7,7 +7,7 @@ import {
   IdlePriority as IdleSchedulerPriority,
   cancelCallback as Scheduler_cancelCallback,
   now,
-} from "./scheduler"
+} from "./Scheduler"
 import { createWorkInProgress } from "./ReactFiber"
 import { beginWork } from "./ReactFiberBeginWork"
 import { completeWork } from "./ReactFiberCompleteWork"

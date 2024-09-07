@@ -1,4 +1,4 @@
-import * as Scheduler from "scheduler"
+import * as Scheduler from "../../scheduler"
 export const scheduleCallback = Scheduler.unstable_scheduleCallback
 export const shouldYield = Scheduler.unstable_shouldYield
 export const ImmediatePriority = Scheduler.unstable_ImmediatePriority
